@@ -4,7 +4,22 @@
     <title>Connexion - Bibliothèque</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
+<style>
+        .admin-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .admin-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 <body>
+     <a href="<%= request.getContextPath() %>/auth/authAdmin" class="admin-link">Espace Admin</a>
+   
     <div class="login-container">
         <div class="login-header">
             <h1>Bibliothèque</h1>
