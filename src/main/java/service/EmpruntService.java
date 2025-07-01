@@ -42,19 +42,20 @@ public class EmpruntService {
         Adherent adherent = adherentRepository.findById(idAdherent)
             .orElseThrow(() -> new Exception("Adhérent introuvable"));
         
-        // Vérifier si l'adhérent a une pénalité active
         if (adherentPenaliteRepository.hasPenaliteActive(idAdherent)) {
             throw new Exception("Impossible d'emprunter : vous avez une pénalité active");
         }
-        if(idT)
-        Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
-        if (quotaMax == null) {
-            quotaMax = 1; 
-        }
         
-        Integer empruntsActuels = adherentExemplaireRepository.countEmpruntsActifsADomicile(idAdherent);
-        if (empruntsActuels != null && empruntsActuels >= quotaMax) {
-            throw new Exception("Quota d'emprunts atteint (" + empruntsActuels + "/" + quotaMax + "). Veuillez retourner des livres avant d'emprunter.");
+        if (idTypePret == 1) { 
+            Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
+            if (quotaMax == null) {
+                quotaMax = 1; 
+            }
+            
+            Integer empruntsActuelsADomicile = adherentExemplaireRepository.countEmpruntsActifsADomicile(idAdherent);
+            if (empruntsActuelsADomicile != null && empruntsActuelsADomicile >= quotaMax) {
+                throw new Exception("Quota d'emprunts à domicile atteint (" + empruntsActuelsADomicile + "/" + quotaMax + "). Veuillez retourner des livres avant d'emprunter.");
+            }
         }
         
         // Récupérer l'exemplaire
@@ -77,15 +78,12 @@ public class EmpruntService {
             throw new Exception("Cet exemplaire est déjà emprunté");
         }
         
-        // Récupérer le type de prêt
         TypePret typePret = typePretRepository.findById(idTypePret)
             .orElseThrow(() -> new Exception("Type de prêt introuvable"));
         
-        // Calculer la date limite
         LocalDate dateEmprunt = LocalDate.now();
         LocalDate dateLimite = calculerDateLimite(adherent.getProfil().getIdProfil(), idTypePret, dateEmprunt);
         
-        // Créer l'emprunt
         AdherentExemplaire emprunt = new AdherentExemplaire();
         emprunt.setAdherent(adherent);
         emprunt.setExemplaire(exemplaire);
@@ -93,17 +91,27 @@ public class EmpruntService {
         emprunt.setDateEmprunt(dateEmprunt);
         emprunt.setDateLimite(dateLimite);
         
+        if (idTypePret == 2) {
+            emprunt.setDateRetour(dateEmprunt); 
+        }
+        
         adherentExemplaireRepository.save(emprunt);
     }
     
     private int calculerAge(LocalDate dateNaissance) {
         if (dateNaissance == null) {
-            return 0; // Si la date de naissance n'est pas renseignée, on considère l'âge comme 0
+            return 0; 
         }
         return Period.between(dateNaissance, LocalDate.now()).getYears();
     }
     
     private LocalDate calculerDateLimite(Integer idProfil, Integer idTypePret, LocalDate dateEmprunt) {
+        // Pour les prêts "sur place" (idTypePret = 2), la date limite est le même jour
+        if (idTypePret == 2) {
+            return dateEmprunt; // Date limite = date d'emprunt (même jour)
+        }
+        
+        // Pour les autres types de prêt, utiliser la durée configurée
         Integer nbJours = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(idProfil, idTypePret);
         if (nbJours == null) {
             nbJours = 14; // valeur par défaut
