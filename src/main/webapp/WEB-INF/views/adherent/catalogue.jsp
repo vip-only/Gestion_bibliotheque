@@ -19,6 +19,101 @@
     </nav>
 
     <div class="container mt-4">
+        <!-- Filtres de recherche -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">🔍 Filtres de recherche</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="filterTitre" class="form-label">Rechercher par titre:</label>
+                                <input type="text" class="form-control" id="filterTitre" placeholder="Rechercher un titre...">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="filterAuteur" class="form-label">Rechercher par auteur:</label>
+                                <select class="form-select" id="filterAuteur">
+                                    <option value="">Tous les auteurs</option>
+                                    <% 
+                                    List<String> auteurs = (List<String>) request.getAttribute("auteurs");
+                                    if (auteurs != null) {
+                                        for (String auteur : auteurs) { 
+                                    %>
+                                    <option value="<%= auteur %>"><%= auteur %></option>
+                                    <% 
+                                        }
+                                    } 
+                                    %>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <label for="filterGenre" class="form-label">Filtrer par genre:</label>
+                                <select class="form-select" id="filterGenre">
+                                    <option value="">Tous les genres</option>
+                                    <% 
+                                    List<String> genres = (List<String>) request.getAttribute("genres");
+                                    if (genres != null) {
+                                        for (String genre : genres) { 
+                                    %>
+                                    <option value="<%= genre %>"><%= genre %></option>
+                                    <% 
+                                        }
+                                    } 
+                                    %>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filterTag" class="form-label">Filtrer par tag:</label>
+                                <select class="form-select" id="filterTag">
+                                    <option value="">Tous les tags</option>
+                                    <% 
+                                    List<String> tags = (List<String>) request.getAttribute("tags");
+                                    if (tags != null) {
+                                        for (String tag : tags) { 
+                                    %>
+                                    <option value="<%= tag %>"><%= tag %></option>
+                                    <% 
+                                        }
+                                    } 
+                                    %>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filterMaison" class="form-label">Filtrer par maison d'édition:</label>
+                                <select class="form-select" id="filterMaison">
+                                    <option value="">Toutes les maisons</option>
+                                    <% 
+                                    List<String> maisonsEdition = (List<String>) request.getAttribute("maisonsEdition");
+                                    if (maisonsEdition != null) {
+                                        for (String maison : maisonsEdition) { 
+                                    %>
+                                    <option value="<%= maison %>"><%= maison %></option>
+                                    <% 
+                                        }
+                                    } 
+                                    %>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary" onclick="filtrerCatalogue()">
+                                    <i class="bi bi-search"></i> Filtrer
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetFiltres()">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Catalogue des livres -->
         <div class="row">
             <div class="col-12">
@@ -39,6 +134,7 @@
                                         <th>Titre</th>
                                         <th>Auteur</th>
                                         <th>Genre</th>
+                                        <th>Tag</th>
                                         <th>Édition</th>
                                         <th>Maison d'édition</th>
                                         <th>Nb Exemplaires</th>
@@ -48,7 +144,11 @@
                                 </thead>
                                 <tbody>
                                     <% for (Map<String, Object> livre : catalogue) { %>
-                                    <tr>
+                                    <tr data-titre="<%= livre.get("titre") != null ? livre.get("titre").toString().toLowerCase() : "" %>"
+                                        data-auteur="<%= livre.get("auteur") != null ? livre.get("auteur").toString().toLowerCase() : "" %>"
+                                        data-genre="<%= livre.get("genre") != null ? livre.get("genre").toString().toLowerCase() : "" %>"
+                                        data-tag="<%= livre.get("tag") != null ? livre.get("tag").toString().toLowerCase() : "" %>"
+                                        data-maison="<%= livre.get("maisonEdition") != null ? livre.get("maisonEdition").toString().toLowerCase() : "" %>">
                                         <td>
                                             <strong><%= livre.get("titre") != null ? livre.get("titre") : "N/A" %></strong>
                                             <% if (livre.get("ageMinimum") != null) { %>
@@ -57,6 +157,7 @@
                                         </td>
                                         <td><%= livre.get("auteur") != null ? livre.get("auteur") : "N/A" %></td>
                                         <td><%= livre.get("genre") != null ? livre.get("genre") : "N/A" %></td>
+                                        <td><%= livre.get("tag") != null ? livre.get("tag") : "N/A" %></td>
                                         <td><%= livre.get("edition") != null ? livre.get("edition") : "N/A" %></td>
                                         <td><%= livre.get("maisonEdition") != null ? livre.get("maisonEdition") : "N/A" %></td>
                                         <td><span class="badge bg-success"><%= livre.get("nombreExemplaires") %></span></td>
@@ -143,6 +244,93 @@
             var age = button.getAttribute('data-age');
             document.getElementById('modalAge').textContent = age ? age + ' ans' : 'Aucune restriction';
         });
+
+        // Fonctions de filtrage (inspirées de retours.jsp)
+        function filtrerCatalogue() {
+            var filterTitre = document.getElementById('filterTitre').value.toLowerCase();
+            var filterAuteur = document.getElementById('filterAuteur').value.toLowerCase();
+            var filterGenre = document.getElementById('filterGenre').value.toLowerCase();
+            var filterTag = document.getElementById('filterTag').value.toLowerCase();
+            var filterMaison = document.getElementById('filterMaison').value.toLowerCase();
+            
+            var table = document.getElementById('tableCatalogue');
+            var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            var visibleCount = 0;
+            
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var titre = row.getAttribute('data-titre');
+                var auteur = row.getAttribute('data-auteur');
+                var genre = row.getAttribute('data-genre');
+                var tag = row.getAttribute('data-tag');
+                var maison = row.getAttribute('data-maison');
+                
+                var showRow = true;
+                
+                // Filtrage par titre (recherche partielle)
+                if (filterTitre && !titre.includes(filterTitre)) {
+                    showRow = false;
+                }
+                
+                // Filtrage par auteur (exact)
+                if (filterAuteur && auteur !== filterAuteur) {
+                    showRow = false;
+                }
+                
+                // Filtrage par genre (exact)
+                if (filterGenre && genre !== filterGenre) {
+                    showRow = false;
+                }
+                
+                // Filtrage par tag (exact)
+                if (filterTag && tag !== filterTag) {
+                    showRow = false;
+                }
+                
+                // Filtrage par maison d'édition (exact)
+                if (filterMaison && maison !== filterMaison) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+                if (showRow) visibleCount++;
+            }
+            
+            // Optionnel: afficher un message si aucun résultat
+            if (visibleCount === 0 && (filterTitre || filterAuteur || filterGenre || filterTag || filterMaison)) {
+                console.log('Aucun livre trouvé avec ces critères');
+            }
+        }
+
+        function resetFiltres() {
+            document.getElementById('filterTitre').value = '';
+            document.getElementById('filterAuteur').value = '';
+            document.getElementById('filterGenre').value = '';
+            document.getElementById('filterTag').value = '';
+            document.getElementById('filterMaison').value = '';
+            
+            var table = document.getElementById('tableCatalogue');
+            var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].style.display = '';
+            }
+        }
+
+        // Filtrage en temps réel pour le titre (comme dans retours.jsp)
+        document.getElementById('filterTitre').addEventListener('input', function() {
+            if (this.value.length > 2) {
+                filtrerCatalogue();
+            } else if (this.value.length === 0) {
+                resetFiltres();
+            }
+        });
+
+        // Filtrage automatique pour les selects
+        document.getElementById('filterAuteur').addEventListener('change', filtrerCatalogue);
+        document.getElementById('filterGenre').addEventListener('change', filtrerCatalogue);
+        document.getElementById('filterTag').addEventListener('change', filtrerCatalogue);
+        document.getElementById('filterMaison').addEventListener('change', filtrerCatalogue);
     </script>
 </body>
 </html>
