@@ -3,13 +3,11 @@ package controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import service.ExemplaireService;
 import service.AdherentService;
 import service.EmpruntService;
+import service.RetourService;
 import jakarta.servlet.http.HttpSession;
 import model.Bibliothecaire;
 import java.util.List;
@@ -28,6 +26,9 @@ public class PretController {
     @Autowired
     private EmpruntService empruntService;
     
+    @Autowired
+    private RetourService retourService;
+    
     @GetMapping("/dashboard")
     public String dashboard(Model model, HttpSession session) {
         Bibliothecaire bibliothecaire = (Bibliothecaire) session.getAttribute("bibliothecaire");
@@ -36,7 +37,7 @@ public class PretController {
         }
         
         List<Map<String, Object>> exemplairesDisponibles = exemplaireService.getExemplairesDisponiblesGroupByLivre();
-        List<Map<String, Object>> adherents = adherentService.getAllAdherents(); // Seulement les adhérents actifs
+        List<Map<String, Object>> adherents = adherentService.getAllAdherents();
         List<Map<String, Object>> typesPret = empruntService.getAllTypesPret();
         
         model.addAttribute("bibliothecaire", bibliothecaire);
@@ -45,6 +46,55 @@ public class PretController {
         model.addAttribute("typesPret", typesPret);
         
         return "admin/dashboard";
+    }
+    
+    @GetMapping("/retours")
+    public String gestionRetours(Model model, HttpSession session) {
+        Bibliothecaire bibliothecaire = (Bibliothecaire) session.getAttribute("bibliothecaire");
+        if (bibliothecaire == null) {
+            return "redirect:/auth/authAdmin";
+        }
+        
+        List<Map<String, Object>> empruntsEnCours = retourService.getEmpruntsEnCours();
+        List<Map<String, Object>> adherents = adherentService.getAllAdherents();
+        
+        model.addAttribute("bibliothecaire", bibliothecaire);
+        model.addAttribute("empruntsEnCours", empruntsEnCours);
+        model.addAttribute("adherents", adherents);
+        
+        return "admin/retours";
+    }
+    
+    @GetMapping("/retours/adherent/{idAdherent}")
+    @ResponseBody
+    public List<Map<String, Object>> getEmpruntsParAdherent(@PathVariable Integer idAdherent) {
+        return retourService.getEmpruntsParAdherent(idAdherent);
+    }
+    
+    @GetMapping("/retours/exemplaire/{numExemplaire}")
+    @ResponseBody
+    public List<Map<String, Object>> getEmpruntParNumExemplaire(@PathVariable String numExemplaire) {
+        return retourService.getEmpruntParNumExemplaire(numExemplaire);
+    }
+    
+    @PostMapping("/retourner")
+    public String retournerLivre(@RequestParam Integer idAdherentExemplaire,
+                                HttpSession session,
+                                Model model) {
+        
+        Bibliothecaire bibliothecaire = (Bibliothecaire) session.getAttribute("bibliothecaire");
+        if (bibliothecaire == null) {
+            return "redirect:/auth/authAdmin";
+        }
+        
+        try {
+            String message = retourService.retournerLivre(idAdherentExemplaire);
+            model.addAttribute("success", message);
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors du retour: " + e.getMessage());
+        }
+        
+        return gestionRetours(model, session);
     }
     
     @PostMapping("/emprunter")

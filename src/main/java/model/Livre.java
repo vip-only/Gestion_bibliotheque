@@ -19,6 +19,9 @@ public class Livre {
     @Column(name = "tag", length = 100)
     private String tag;
     
+    @Column(name = "agesup")
+    private Integer agesup; // Âge minimum requis
+    
     @ManyToOne
     @JoinColumn(name = "idAuteur")
     private Auteur auteur;
@@ -34,10 +37,11 @@ public class Livre {
     public Livre() {
     }
 
-    public Livre(String titre, String edition, String tag, Auteur auteur, MaisonEdition maisonEdition, GenreLitteraire genreLitteraire) {
+    public Livre(String titre, String edition, String tag, Integer agesup, Auteur auteur, MaisonEdition maisonEdition, GenreLitteraire genreLitteraire) {
         this.titre = titre;
         this.edition = edition;
         this.tag = tag;
+        this.agesup = agesup;
         this.auteur = auteur;
         this.maisonEdition = maisonEdition;
         this.genreLitteraire = genreLitteraire;
@@ -75,6 +79,14 @@ public class Livre {
         this.tag = tag;
     }
 
+    public Integer getAgesup() {
+        return agesup;
+    }
+
+    public void setAgesup(Integer agesup) {
+        this.agesup = agesup;
+    }
+
     public Auteur getAuteur() {
         return auteur;
     }
@@ -106,9 +118,7 @@ public class Livre {
                 ", titre='" + titre + '\'' +
                 ", edition='" + edition + '\'' +
                 ", tag='" + tag + '\'' +
-                ", auteur=" + auteur +
-                ", maisonEdition=" + maisonEdition +
-                ", genreLitteraire=" + genreLitteraire +
+                ", agesup=" + agesup +
                 '}';
     }
 }

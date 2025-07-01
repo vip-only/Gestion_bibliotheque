@@ -17,6 +17,7 @@ public interface ExemplaireRepository extends JpaRepository<Exemplaire, Integer>
             l.titre as titre,
             l.edition as edition,
             l.tag as tag,
+            l.agesup as ageMinimum,
             a.nom AS auteur,
             me.nom AS maisonEdition,
             gl.libelle AS genre,
@@ -40,7 +41,7 @@ public interface ExemplaireRepository extends JpaRepository<Exemplaire, Integer>
             INNER JOIN Etat et ON re.idEtat = et.idEtat
             WHERE et.libelle = 'en cours' AND r.dateFin >= CURDATE()
         )
-        GROUP BY l.idLivre, l.titre, l.edition, l.tag, a.nom, me.nom, gl.libelle
+        GROUP BY l.idLivre, l.titre, l.edition, l.tag, l.agesup, a.nom, me.nom, gl.libelle
         ORDER BY l.titre
         """, nativeQuery = true)
     List<Map<String, Object>> findExemplairesDisponiblesGroupByLivre();

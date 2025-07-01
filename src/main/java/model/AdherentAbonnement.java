@@ -1,7 +1,6 @@
 package model;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -9,39 +8,34 @@ import java.time.LocalDate;
 public class AdherentAbonnement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idAdherentAbonnement")
-    private Integer idAdherentAbonnement;
+    @Column(name = "idAdherentInscription")
+    private Integer idAdherentInscription;
     
     @ManyToOne
     @JoinColumn(name = "idAdherent")
     private Adherent adherent;
     
-    @ManyToOne
-    @JoinColumn(name = "idAbonnement")
-    private Abonnement abonnement;
+    @Column(name = "dateInscription", nullable = false)
+    private LocalDate dateInscription;
     
-    @Column(name = "prixPaiement", nullable = false, precision = 10, scale = 2)
-    private BigDecimal prixPaiement;
-    
-    @Column(name = "datePaiement", nullable = false)
-    private LocalDate datePaiement;
+    @Column(name = "dateFin", nullable = false)
+    private LocalDate dateFin;
 
     public AdherentAbonnement() {
     }
 
-    public AdherentAbonnement(Adherent adherent, Abonnement abonnement, BigDecimal prixPaiement, LocalDate datePaiement) {
+    public AdherentAbonnement(Adherent adherent, LocalDate dateInscription, LocalDate dateFin) {
         this.adherent = adherent;
-        this.abonnement = abonnement;
-        this.prixPaiement = prixPaiement;
-        this.datePaiement = datePaiement;
+        this.dateInscription = dateInscription;
+        this.dateFin = dateFin;
     }
 
-    public Integer getIdAdherentAbonnement() {
-        return idAdherentAbonnement;
+    public Integer getIdAdherentInscription() {
+        return idAdherentInscription;
     }
 
-    public void setIdAdherentAbonnement(Integer idAdherentAbonnement) {
-        this.idAdherentAbonnement = idAdherentAbonnement;
+    public void setIdAdherentInscription(Integer idAdherentInscription) {
+        this.idAdherentInscription = idAdherentInscription;
     }
 
     public Adherent getAdherent() {
@@ -52,36 +46,28 @@ public class AdherentAbonnement {
         this.adherent = adherent;
     }
 
-    public Abonnement getAbonnement() {
-        return abonnement;
+    public LocalDate getDateInscription() {
+        return dateInscription;
     }
 
-    public void setAbonnement(Abonnement abonnement) {
-        this.abonnement = abonnement;
+    public void setDateInscription(LocalDate dateInscription) {
+        this.dateInscription = dateInscription;
     }
 
-    public BigDecimal getPrixPaiement() {
-        return prixPaiement;
+    public LocalDate getDateFin() {
+        return dateFin;
     }
 
-    public void setPrixPaiement(BigDecimal prixPaiement) {
-        this.prixPaiement = prixPaiement;
-    }
-
-    public LocalDate getDatePaiement() {
-        return datePaiement;
-    }
-
-    public void setDatePaiement(LocalDate datePaiement) {
-        this.datePaiement = datePaiement;
+    public void setDateFin(LocalDate dateFin) {
+        this.dateFin = dateFin;
     }
 
     @Override
     public String toString() {
         return "AdherentAbonnement{" +
-                "idAdherentAbonnement=" + idAdherentAbonnement +
-                ", prixPaiement=" + prixPaiement +
-                ", datePaiement=" + datePaiement +
+                "idAdherentInscription=" + idAdherentInscription +
+                ", dateInscription=" + dateInscription +
+                ", dateFin=" + dateFin +
                 '}';
     }
 }

@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +26,6 @@ public interface AdherentAbonnementRepository extends JpaRepository<AdherentAbon
         FROM Adherent a
         INNER JOIN Profil p ON a.idProfil = p.idProfil
         INNER JOIN AdherentAbonnement aa ON a.idAdherent = aa.idAdherent
-        INNER JOIN Abonnement ab ON aa.idAbonnement = ab.idAbonnement
         LEFT JOIN Quota q ON p.idProfil = q.idProfil
         LEFT JOIN (
             SELECT 
@@ -44,24 +42,23 @@ public interface AdherentAbonnementRepository extends JpaRepository<AdherentAbon
             FROM AdherentPenalite ap 
             WHERE ap.dateFin >= CURDATE()
         ) pen ON a.idAdherent = pen.idAdherent
-        WHERE DATE_ADD(aa.datePaiement, INTERVAL ab.duree DAY) >= CURDATE()
+        WHERE aa.dateFin >= CURDATE()
         ORDER BY a.nom
         """, nativeQuery = true)
     List<Map<String, Object>> findAdherentsActifs();
     
-    @Query("SELECT aa FROM AdherentAbonnement aa WHERE aa.adherent.idAdherent = :idAdherent ORDER BY aa.datePaiement DESC")
-    List<AdherentAbonnement> findByAdherentIdOrderByDatePaiementDesc(@Param("idAdherent") Integer idAdherent);
+    @Query("SELECT aa FROM AdherentAbonnement aa WHERE aa.adherent.idAdherent = :idAdherent ORDER BY aa.dateInscription DESC")
+    List<AdherentAbonnement> findByAdherentIdOrderByDateInscriptionDesc(@Param("idAdherent") Integer idAdherent);
     
     @Query(value = """
         SELECT 
             CASE 
-                WHEN DATE_ADD(aa.datePaiement, INTERVAL ab.duree DAY) >= CURDATE() THEN 1 
+                WHEN aa.dateFin >= CURDATE() THEN 1 
                 ELSE 0 
             END as abonnementActif
         FROM AdherentAbonnement aa
-        INNER JOIN Abonnement ab ON aa.idAbonnement = ab.idAbonnement
         WHERE aa.idAdherent = :idAdherent
-        ORDER BY aa.datePaiement DESC
+        ORDER BY aa.dateInscription DESC
         LIMIT 1
         """, nativeQuery = true)
     Integer isAbonnementActif(@Param("idAdherent") Integer idAdherent);
