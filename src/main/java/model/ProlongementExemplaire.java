@@ -11,19 +11,18 @@ public class ProlongementExemplaire {
     private Integer idProlongementExemplaire;
     
     @ManyToOne
-    @JoinColumn(name = "idExemplaire")
-    private Exemplaire exemplaire;
+    @JoinColumn(name = "idAdherentExemplaire")
+    private AdherentExemplaire adherentExemplaire;
     
-    @ManyToOne
-    @JoinColumn(name = "idEtat")
-    private Etat etat;
+    @Column(name = "prolongement", nullable = false)
+    private Integer prolongement;
 
     public ProlongementExemplaire() {
     }
 
-    public ProlongementExemplaire(Exemplaire exemplaire, Etat etat) {
-        this.exemplaire = exemplaire;
-        this.etat = etat;
+    public ProlongementExemplaire(AdherentExemplaire adherentExemplaire, Integer prolongement) {
+        this.adherentExemplaire = adherentExemplaire;
+        this.prolongement = prolongement;
     }
 
     public Integer getIdProlongementExemplaire() {
@@ -34,28 +33,27 @@ public class ProlongementExemplaire {
         this.idProlongementExemplaire = idProlongementExemplaire;
     }
 
-    public Exemplaire getExemplaire() {
-        return exemplaire;
+    public AdherentExemplaire getAdherentExemplaire() {
+        return adherentExemplaire;
     }
 
-    public void setExemplaire(Exemplaire exemplaire) {
-        this.exemplaire = exemplaire;
+    public void setAdherentExemplaire(AdherentExemplaire adherentExemplaire) {
+        this.adherentExemplaire = adherentExemplaire;
     }
 
-    public Etat getEtat() {
-        return etat;
+    public Integer getProlongement() {
+        return prolongement;
     }
 
-    public void setEtat(Etat etat) {
-        this.etat = etat;
+    public void setProlongement(Integer prolongement) {
+        this.prolongement = prolongement;
     }
 
     @Override
     public String toString() {
         return "ProlongementExemplaire{" +
                 "idProlongementExemplaire=" + idProlongementExemplaire +
-                ", exemplaire=" + exemplaire +
-                ", etat=" + etat +
+                ", prolongement=" + prolongement +
                 '}';
     }
 }

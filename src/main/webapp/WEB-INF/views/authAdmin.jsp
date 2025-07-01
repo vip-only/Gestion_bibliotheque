@@ -5,7 +5,7 @@
     <title>Connexion Admin - Bibliothèque</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-primary">
+<body class="bg-light">
     <div class="position-absolute top-0 start-0 m-3">
         <a href="<%= request.getContextPath() %>/" class="text-white text-decoration-none">← Retour</a>
     </div>

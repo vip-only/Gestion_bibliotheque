@@ -14,15 +14,15 @@ public class Quota {
     @JoinColumn(name = "idProfil")
     private Profil profil;
     
-    @Column(name = "nombreLivre", nullable = false)
-    private Integer nombreLivre;
+    @Column(name = "nbExemplaires", nullable = false)
+    private Integer nbExemplaires; // nombre d'exemplaires autorisés
 
     public Quota() {
     }
 
-    public Quota(Profil profil, Integer nombreLivre) {
+    public Quota(Profil profil, Integer nbExemplaires) {
         this.profil = profil;
-        this.nombreLivre = nombreLivre;
+        this.nbExemplaires = nbExemplaires;
     }
 
     public Integer getIdQuota() {
@@ -41,12 +41,12 @@ public class Quota {
         this.profil = profil;
     }
 
-    public Integer getNombreLivre() {
-        return nombreLivre;
+    public Integer getNbExemplaires() {
+        return nbExemplaires;
     }
 
-    public void setNombreLivre(Integer nombreLivre) {
-        this.nombreLivre = nombreLivre;
+    public void setNbExemplaires(Integer nbExemplaires) {
+        this.nbExemplaires = nbExemplaires;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class Quota {
         return "Quota{" +
                 "idQuota=" + idQuota +
                 ", profil=" + profil +
-                ", nombreLivre=" + nombreLivre +
+                ", nbExemplaires=" + nbExemplaires +
                 '}';
     }
 }

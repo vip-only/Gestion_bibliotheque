@@ -24,20 +24,15 @@ public class Reservation {
     
     @Column(name = "dateFin")
     private LocalDate dateFin;
-    
-    @ManyToOne
-    @JoinColumn(name = "idEtat")
-    private Etat etat;
 
     public Reservation() {
     }
 
-    public Reservation(Adherent adherent, Exemplaire exemplaire, LocalDate dateDebut, LocalDate dateFin, Etat etat) {
+    public Reservation(Adherent adherent, Exemplaire exemplaire, LocalDate dateDebut, LocalDate dateFin) {
         this.adherent = adherent;
         this.exemplaire = exemplaire;
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
-        this.etat = etat;
     }
 
     public Integer getIdReservation() {
@@ -80,21 +75,12 @@ public class Reservation {
         this.dateFin = dateFin;
     }
 
-    public Etat getEtat() {
-        return etat;
-    }
-
-    public void setEtat(Etat etat) {
-        this.etat = etat;
-    }
-
     @Override
     public String toString() {
         return "Reservation{" +
                 "idReservation=" + idReservation +
                 ", dateDebut=" + dateDebut +
                 ", dateFin=" + dateFin +
-                ", etat=" + etat +
                 '}';
     }
 }

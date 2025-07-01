@@ -83,13 +83,18 @@ CREATE TABLE AdherentExemplaire (
     FOREIGN KEY (idExemplaire) REFERENCES Exemplaire(idExemplaire),
     FOREIGN KEY (idTypePret) REFERENCES TypePret(idTypePret)
 );
+
 CREATE TABLE ProlongementExemplaire (
     idProlongementExemplaire INT AUTO_INCREMENT PRIMARY KEY,
     idAdherentExemplaire INT,
     prolongement INT NOT NULL,
+    FOREIGN KEY (idAdherentExemplaire) REFERENCES AdherentExemplaire(idAdherentExemplaire)
+);
+CREATE TABLE EtatProlongementExemplaire(
+    idEtatProlongementExemplaire INT AUTO_INCREMENT PRIMARY KEY,
+    idProlongementExemplaire INT,
     idEtat INT,
-    FOREIGN KEY (idAdherentExemplaire) REFERENCES AdherentExemplaire(idAdherentExemplaire),
-    FOREIGN KEY (idEtat) REFERENCES Etat(idEtat)
+    dateEtat DATE
 );
 CREATE TABLE TypePret (
     idTypePret INT AUTO_INCREMENT PRIMARY KEY,
@@ -117,11 +122,19 @@ CREATE TABLE Reservation (
     idExemplaire INT,
     dateDebut DATE,
     dateFin DATE,
-    idEtat INT,
     FOREIGN KEY (idAdherent) REFERENCES Adherent(idAdherent),
-    FOREIGN KEY (idExemplaire) REFERENCES Exemplaire(idExemplaire),
+    FOREIGN KEY (idExemplaire) REFERENCES Exemplaire(idExemplaire)
+);
+CREATE TABLE ReservationEtat (
+    idReservationEtat INT AUTO_INCREMENT PRIMARY KEY,
+    idReservation INT,
+    idEtat INT,
+    dateEtat date,
+    FOREIGN KEY (idReservation) REFERENCES Reservation(idReservation),
     FOREIGN KEY (idEtat) REFERENCES Etat(idEtat)
 );
+
+
 CREATE TABLE Quota (
     idQuota INT AUTO_INCREMENT PRIMARY KEY,
     idProfil INT,
@@ -138,3 +151,29 @@ CREATE TABLE DureeEmprunt (
     FOREIGN KEY (idTypePret) REFERENCES TypePret(idTypePret)
 );
 
+CREATE TABLE Abonnement (
+    idAbonnement INT AUTO_INCREMENT PRIMARY KEY,
+    duree INT NOT NULL, -- durée en jours
+    montant DECIMAL(10,2) NOT NULL,
+    idProfil INT,
+    FOREIGN KEY (idProfil) REFERENCES Profil(idProfil)
+);
+
+CREATE TABLE AdherentAbonnement (
+    idAdherentAbonnement INT AUTO_INCREMENT PRIMARY KEY,
+    idAdherent INT,
+    idAbonnement INT,
+    prixPaiement DECIMAL(10,2) NOT NULL,
+    datePaiement DATE NOT NULL,
+    FOREIGN KEY (idAdherent) REFERENCES Adherent(idAdherent),
+    FOREIGN KEY (idAbonnement) REFERENCES Abonnement(idAbonnement)
+);
+
+
+
+CREATE TABLE JourFerie (
+    idJourFerie INT AUTO_INCREMENT PRIMARY KEY,
+    dateJourFerie DATE NOT NULL UNIQUE,
+    libelle VARCHAR(100) NOT NULL,
+    annuel BOOLEAN DEFAULT FALSE
+);
