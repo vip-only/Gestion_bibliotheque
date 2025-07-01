@@ -12,7 +12,7 @@ public class HomeController {
     public String home(HttpSession session) {
         Adherent adherent = (Adherent) session.getAttribute("adherent");
         if (adherent != null) {
-            return "redirect:/dashboard";
+            return "redirect:/adherent/catalogue";
         }
         
        return "connexion";
@@ -25,6 +25,6 @@ public class HomeController {
             return "redirect:/";
         }
         
-        return "dashboard";
+        return "redirect:/adherent/catalogue";
     }
 }
