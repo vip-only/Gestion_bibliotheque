@@ -11,6 +11,7 @@
         <div class="container-fluid">
             <span class="navbar-brand">🏛️ Admin - Bibliothèque</span>
             <div class="navbar-nav ms-auto">
+                <a href="<%= request.getContextPath() %>/admin/retours" class="btn btn-outline-light btn-sm me-2">🔄 Retours</a>
                 <span class="navbar-text me-3">Bonjour, ${bibliothecaire.nom}</span>
                 <a href="<%= request.getContextPath() %>/auth/logoutAdmin" class="btn btn-outline-light btn-sm">Déconnexion</a>
             </div>
@@ -62,7 +63,12 @@
                                 <tbody>
                                     <% for (Map<String, Object> livre : exemplaires) { %>
                                     <tr>
-                                        <td><strong><%= livre.get("titre") != null ? livre.get("titre") : "N/A" %></strong></td>
+                                        <td>
+                                            <strong><%= livre.get("titre") != null ? livre.get("titre") : "N/A" %></strong>
+                                            <% if (livre.get("ageMinimum") != null) { %>
+                                                <br><small class="text-warning">⚠️ Âge min: <%= livre.get("ageMinimum") %> ans</small>
+                                            <% } %>
+                                        </td>
                                         <td><%= livre.get("auteur") != null ? livre.get("auteur") : "N/A" %></td>
                                         <td><%= livre.get("genre") != null ? livre.get("genre") : "N/A" %></td>
                                         <td><%= livre.get("edition") != null ? livre.get("edition") : "N/A" %></td>

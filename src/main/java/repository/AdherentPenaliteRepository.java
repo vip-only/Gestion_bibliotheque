@@ -5,31 +5,33 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface AdherentPenaliteRepository extends JpaRepository<AdherentPenalite, Integer> {
     
-    @Query(value = """
-        SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
-        FROM AdherentPenalite ap 
-        WHERE ap.idAdherent = :idAdherent 
-        AND ap.dateFin >= CURDATE()
-        """, nativeQuery = true)
-    Integer hasPenaliteActiveAsInteger(@Param("idAdherent") Integer idAdherent);
+    @Query(value = "SELECT COUNT(*) > 0 FROM AdherentPenalite WHERE idAdherent = :idAdherent AND dateFin >= CURDATE()", nativeQuery = true)
+    boolean hasPenaliteActive(@Param("idAdherent") Integer idAdherent);
+    
+    @Query("SELECT ap FROM AdherentPenalite ap WHERE ap.adherent.idAdherent = :idAdherent ORDER BY ap.dateFin DESC LIMIT 1")
+    AdherentPenalite findDernierePenaliteByAdherent(@Param("idAdherent") Integer idAdherent);
+    
+    @Query("SELECT ap FROM AdherentPenalite ap WHERE ap.adherent.idAdherent = :idAdherent AND ap.dateFin >= CURRENT_DATE ORDER BY ap.dateFin DESC")
+    List<AdherentPenalite> findPenalitesActivesByAdherent(@Param("idAdherent") Integer idAdherent);
     
     @Query(value = """
-        SELECT ap.dateFin 
-        FROM AdherentPenalite ap 
-        WHERE ap.idAdherent = :idAdherent 
-        AND ap.dateFin >= CURDATE()
-        ORDER BY ap.dateFin DESC 
-        LIMIT 1
+        SELECT 
+            a.nom as nomAdherent,
+            a.email as emailAdherent,
+            p.libelle as typePenalite,
+            ap.dateDebut,
+            ap.dateFin,
+            DATEDIFF(ap.dateFin, CURDATE()) as joursRestants
+        FROM AdherentPenalite ap
+        INNER JOIN Adherent a ON ap.idAdherent = a.idAdherent
+        INNER JOIN Penalite p ON ap.idPenalite = p.idPenalite
+        WHERE ap.dateFin >= CURDATE()
+        ORDER BY ap.dateFin ASC
         """, nativeQuery = true)
-    String getDateFinPenalite(@Param("idAdherent") Integer idAdherent);
-    
-    // Méthode helper pour convertir Integer en Boolean
-    default boolean hasPenaliteActive(Integer idAdherent) {
-        Integer result = hasPenaliteActiveAsInteger(idAdherent);
-        return result != null && result == 1;
-    }
+    List<Object[]> findAllPenalitesActives();
 }

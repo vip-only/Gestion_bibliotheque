@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import repository.*;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +33,6 @@ public class EmpruntService {
     @Autowired
     private AdherentPenaliteRepository adherentPenaliteRepository;
     
-    @Autowired
-    private JourFerieService jourFerieService;
-    
     public List<Map<String, Object>> getAllTypesPret() {
         return typePretRepository.findAllTypesPretForSelect();
     }
@@ -44,20 +42,20 @@ public class EmpruntService {
         Adherent adherent = adherentRepository.findById(idAdherent)
             .orElseThrow(() -> new Exception("Adhérent introuvable"));
         
-        // Vérifier si l'adhérent a une pénalité active
         if (adherentPenaliteRepository.hasPenaliteActive(idAdherent)) {
             throw new Exception("Impossible d'emprunter : vous avez une pénalité active");
         }
         
-        // Vérifier le quota d'emprunts
-        Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
-        if (quotaMax == null) {
-            quotaMax = 1; // quota par défaut
-        }
-        
-        Integer empruntsActuels = adherentExemplaireRepository.countEmpruntsActifs(idAdherent);
-        if (empruntsActuels != null && empruntsActuels >= quotaMax) {
-            throw new Exception("Quota d'emprunts atteint (" + empruntsActuels + "/" + quotaMax + "). Veuillez retourner des livres avant d'emprunter.");
+        if (idTypePret == 1) { 
+            Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
+            if (quotaMax == null) {
+                quotaMax = 1; 
+            }
+            
+            Integer empruntsActuelsADomicile = adherentExemplaireRepository.countEmpruntsActifsADomicile(idAdherent);
+            if (empruntsActuelsADomicile != null && empruntsActuelsADomicile >= quotaMax) {
+                throw new Exception("Quota d'emprunts à domicile atteint (" + empruntsActuelsADomicile + "/" + quotaMax + "). Veuillez retourner des livres avant d'emprunter.");
+            }
         }
         
         // Récupérer l'exemplaire
@@ -66,20 +64,26 @@ public class EmpruntService {
             throw new Exception("Exemplaire introuvable");
         }
         
+        // Vérifier l'âge requis pour le livre
+        if (exemplaire.getLivre().getAgesup() != null) {
+            int ageAdherent = calculerAge(adherent.getDateNaissance());
+            if (ageAdherent < exemplaire.getLivre().getAgesup()) {
+                throw new Exception("Âge minimum requis pour ce livre : " + exemplaire.getLivre().getAgesup() + " ans. " +
+                                  "Âge de l'adhérent : " + ageAdherent + " ans.");
+            }
+        }
+        
         // Vérifier que l'exemplaire est disponible
         if (adherentExemplaireRepository.existsByExemplaireAndDateRetourIsNull(exemplaire)) {
             throw new Exception("Cet exemplaire est déjà emprunté");
         }
         
-        // Récupérer le type de prêt
         TypePret typePret = typePretRepository.findById(idTypePret)
             .orElseThrow(() -> new Exception("Type de prêt introuvable"));
         
-        // Calculer la date limite avec gestion des jours fériés
         LocalDate dateEmprunt = LocalDate.now();
-        LocalDate dateLimite = calculerDateLimiteAvecJoursFeries(adherent.getProfil().getIdProfil(), idTypePret, dateEmprunt);
+        LocalDate dateLimite = calculerDateLimite(adherent.getProfil().getIdProfil(), idTypePret, dateEmprunt);
         
-        // Créer l'emprunt
         AdherentExemplaire emprunt = new AdherentExemplaire();
         emprunt.setAdherent(adherent);
         emprunt.setExemplaire(exemplaire);
@@ -87,43 +91,31 @@ public class EmpruntService {
         emprunt.setDateEmprunt(dateEmprunt);
         emprunt.setDateLimite(dateLimite);
         
+        if (idTypePret == 2) {
+            emprunt.setDateRetour(dateEmprunt); 
+        }
+        
         adherentExemplaireRepository.save(emprunt);
     }
     
-    private LocalDate calculerDateLimiteAvecJoursFeries(Integer idProfil, Integer idTypePret, LocalDate dateEmprunt) {
+    private int calculerAge(LocalDate dateNaissance) {
+        if (dateNaissance == null) {
+            return 0; 
+        }
+        return Period.between(dateNaissance, LocalDate.now()).getYears();
+    }
+    
+    private LocalDate calculerDateLimite(Integer idProfil, Integer idTypePret, LocalDate dateEmprunt) {
+        // Pour les prêts "sur place" (idTypePret = 2), la date limite est le même jour
+        if (idTypePret == 2) {
+            return dateEmprunt; // Date limite = date d'emprunt (même jour)
+        }
+        
+        // Pour les autres types de prêt, utiliser la durée configurée
         Integer nbJours = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(idProfil, idTypePret);
         if (nbJours == null) {
             nbJours = 14; // valeur par défaut
         }
-        
-        LocalDate dateLimiteBase = dateEmprunt.plusDays(nbJours);
-        LocalDate dateLimiteAjustee = jourFerieService.ajusterDateLimite(dateLimiteBase);
-        
-        return dateLimiteAjustee;
-    }
-    
-    private LocalDate calculerDateLimiteJoursOuvrables(Integer idProfil, Integer idTypePret, LocalDate dateEmprunt) {
-        Integer nbJours = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(idProfil, idTypePret);
-        if (nbJours == null) {
-            nbJours = 14; // valeur par défaut
-        }
-        
-        return jourFerieService.calculerDateLimiteAvecJoursOuvrables(dateEmprunt, nbJours);
-    }
-    
-    public String getInfoDateLimite(Integer idProfil, Integer idTypePret, LocalDate dateEmprunt) {
-        Integer nbJours = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(idProfil, idTypePret);
-        if (nbJours == null) {
-            nbJours = 14;
-        }
-        
-        LocalDate dateLimiteBase = dateEmprunt.plusDays(nbJours);
-        LocalDate dateLimiteAjustee = jourFerieService.ajusterDateLimite(dateLimiteBase);
-        
-        if (dateLimiteBase.equals(dateLimiteAjustee)) {
-            return "Date limite: " + dateLimiteBase + " (" + nbJours + " jours)";
-        } else {
-            return "Date limite: " + dateLimiteAjustee + " (" + nbJours + " jours + ajustement jour non ouvrable)";
-        }
+        return dateEmprunt.plusDays(nbJours);
     }
 }

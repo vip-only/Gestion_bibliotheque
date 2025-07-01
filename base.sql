@@ -25,6 +25,7 @@ CREATE TABLE GenreLitteraire (
     idGenre INT AUTO_INCREMENT PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL
 );
+
 CREATE TABLE Livre (
     idLivre INT AUTO_INCREMENT PRIMARY KEY,
     titre VARCHAR(200) NOT NULL,
@@ -32,8 +33,10 @@ CREATE TABLE Livre (
     tag VARCHAR(100),
     idAuteur INT,
     idMaison INT,
-    idGenre INT
+    idGenre INT,
+    agesup INT
 );
+
 CREATE TABLE Exemplaire (
     idExemplaire INT AUTO_INCREMENT PRIMARY KEY,
     numExemplaire VARCHAR(50) NOT NULL,
@@ -54,21 +57,12 @@ CREATE TABLE Adherent (
     FOREIGN KEY (idProfil) REFERENCES Profil(idProfil)
 );
 
-CREATE TABLE Inscription (
-    idInscription INT AUTO_INCREMENT PRIMARY KEY,
-    duree INT NOT NULL, 
-    montant DECIMAL(10,2) NOT NULL,
-    idProfil INT,
-    FOREIGN KEY (idProfil) REFERENCES Profil(idProfil)
-);
-CREATE TABLE AdherentInscription (
+CREATE TABLE AdherentAbonnement (
     idAdherentInscription INT AUTO_INCREMENT PRIMARY KEY,
     idAdherent INT,
-    idInscription INT,
-    montant DECIMAL(10,2) NOT NULL,
     dateInscription DATE NOT NULL,
-    FOREIGN KEY (idAdherent) REFERENCES Adherent(idAdherent),
-    FOREIGN KEY (idInscription) REFERENCES Inscription(idInscription)
+    dateFin DATE NOT NULL,
+    FOREIGN KEY (idAdherent) REFERENCES Adherent(idAdherent)
 );
 
 CREATE TABLE AdherentExemplaire (
@@ -90,12 +84,14 @@ CREATE TABLE ProlongementExemplaire (
     prolongement INT NOT NULL,
     FOREIGN KEY (idAdherentExemplaire) REFERENCES AdherentExemplaire(idAdherentExemplaire)
 );
+
 CREATE TABLE EtatProlongementExemplaire(
     idEtatProlongementExemplaire INT AUTO_INCREMENT PRIMARY KEY,
     idProlongementExemplaire INT,
     idEtat INT,
     dateEtat DATE
 );
+
 CREATE TABLE TypePret (
     idTypePret INT AUTO_INCREMENT PRIMARY KEY,
     libelle VARCHAR(50) NOT NULL -- ("à domicile", "sur place")
@@ -150,26 +146,6 @@ CREATE TABLE DureeEmprunt (
     FOREIGN KEY (idProfil) REFERENCES Profil(idProfil),
     FOREIGN KEY (idTypePret) REFERENCES TypePret(idTypePret)
 );
-
-CREATE TABLE Abonnement (
-    idAbonnement INT AUTO_INCREMENT PRIMARY KEY,
-    duree INT NOT NULL, -- durée en jours
-    montant DECIMAL(10,2) NOT NULL,
-    idProfil INT,
-    FOREIGN KEY (idProfil) REFERENCES Profil(idProfil)
-);
-
-CREATE TABLE AdherentAbonnement (
-    idAdherentAbonnement INT AUTO_INCREMENT PRIMARY KEY,
-    idAdherent INT,
-    idAbonnement INT,
-    prixPaiement DECIMAL(10,2) NOT NULL,
-    datePaiement DATE NOT NULL,
-    FOREIGN KEY (idAdherent) REFERENCES Adherent(idAdherent),
-    FOREIGN KEY (idAbonnement) REFERENCES Abonnement(idAbonnement)
-);
-
-
 
 CREATE TABLE JourFerie (
     idJourFerie INT AUTO_INCREMENT PRIMARY KEY,
