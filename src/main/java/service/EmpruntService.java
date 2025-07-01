@@ -58,7 +58,6 @@ public class EmpruntService {
             }
         }
         
-        // Récupérer l'exemplaire
         Exemplaire exemplaire = exemplaireRepository.findByNumExemplaire(numExemplaire);
         if (exemplaire == null) {
             throw new Exception("Exemplaire introuvable");
@@ -72,8 +71,7 @@ public class EmpruntService {
                                   "Âge de l'adhérent : " + ageAdherent + " ans.");
             }
         }
-        
-        // Vérifier que l'exemplaire est disponible
+       
         if (adherentExemplaireRepository.existsByExemplaireAndDateRetourIsNull(exemplaire)) {
             throw new Exception("Cet exemplaire est déjà emprunté");
         }
