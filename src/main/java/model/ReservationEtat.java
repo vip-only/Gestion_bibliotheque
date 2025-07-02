@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "reservationetat")
+@Table(name = "ReservationEtat")
 public class ReservationEtat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idReservationEtat")
     private Integer idReservationEtat;
     
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idReservation")
     private Reservation reservation;
     

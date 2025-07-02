@@ -50,6 +50,9 @@ public interface AdherentAbonnementRepository extends JpaRepository<AdherentAbon
     @Query("SELECT aa FROM AdherentAbonnement aa WHERE aa.adherent.idAdherent = :idAdherent ORDER BY aa.dateInscription DESC")
     List<AdherentAbonnement> findByAdherentIdOrderByDateInscriptionDesc(@Param("idAdherent") Integer idAdherent);
     
+    @Query("SELECT aa FROM AdherentAbonnement aa WHERE aa.adherent.idAdherent = :idAdherent AND aa.dateFin >= CURRENT_DATE ORDER BY aa.dateFin DESC")
+    List<AdherentAbonnement> findAbonnementsActifs(@Param("idAdherent") Integer idAdherent);
+    
     @Query(value = """
         SELECT 
             CASE 

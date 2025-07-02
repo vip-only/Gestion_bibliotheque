@@ -282,26 +282,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Gestion du modal de détails
-        document.getElementById('detailModal').addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            
-            document.getElementById('modalTitre').textContent = button.getAttribute('data-titre') || 'N/A';
-            document.getElementById('modalAuteur').textContent = button.getAttribute('data-auteur') || 'N/A';
-            document.getElementById('modalGenre').textContent = button.getAttribute('data-genre') || 'N/A';
-            document.getElementById('modalTag').textContent = button.getAttribute('data-tag') || 'N/A';
-            document.getElementById('modalEdition').textContent = button.getAttribute('data-edition') || 'N/A';
-            document.getElementById('modalMaison').textContent = button.getAttribute('data-maison') || 'N/A';
-            
-            var age = button.getAttribute('data-age');
-            document.getElementById('modalAge').textContent = age ? age + ' ans' : 'Aucune restriction';
-        });
-
-        // Fonction de confirmation de réservation modifiée
+        // Fonction de confirmation de réservation avec plus de logs
         function confirmerReservation() {
+            console.log("=== DEBUT CONFIRMATION RESERVATION ===");
+            
             var numExemplaire = document.getElementById('numExemplaireReservation').value;
             var dateReservation = document.getElementById('dateReservation').value;
-            var typePret = document.getElementById('typePretReservation').value;
+            
+            console.log("Exemplaire sélectionné:", numExemplaire);
+            console.log("Date sélectionnée:", dateReservation);
             
             if (!numExemplaire) {
                 alert('Veuillez sélectionner un exemplaire');
@@ -310,11 +299,6 @@
             
             if (!dateReservation) {
                 alert('Veuillez sélectionner une date de récupération');
-                return;
-            }
-            
-            if (!typePret) {
-                alert('Veuillez sélectionner un type d\'emprunt');
                 return;
             }
             
@@ -331,6 +315,8 @@
             btnConfirmer.disabled = true;
             btnConfirmer.innerHTML = '<i class="bi bi-hourglass-split"></i> Réservation en cours...';
             
+            console.log("Envoi de la requête...");
+            
             // Envoyer la requête de réservation
             fetch('<%= request.getContextPath() %>/adherent/reserver', {
                 method: 'POST',
@@ -338,11 +324,18 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: 'numExemplaire=' + encodeURIComponent(numExemplaire) + 
-                      '&dateReservation=' + encodeURIComponent(dateReservation) +
-                      '&idTypePret=' + encodeURIComponent(typePret)
+                      '&dateReservation=' + encodeURIComponent(dateReservation)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log("Réponse reçue, status:", response.status);
+                if (!response.ok) {
+                    throw new Error('Erreur HTTP: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Données reçues:", data);
+                
                 // Fermer le modal
                 var modal = bootstrap.Modal.getInstance(document.getElementById('reservationModal'));
                 modal.hide();
@@ -355,6 +348,7 @@
                 btnConfirmer.innerHTML = '<i class="bi bi-bookmark"></i> Confirmer la réservation';
                 
                 if (data.success) {
+                    console.log("Réservation réussie !");
                     // Optionnel: recharger la page pour mettre à jour les disponibilités
                     setTimeout(() => {
                         window.location.reload();
@@ -362,14 +356,40 @@
                 }
             })
             .catch(error => {
-                console.error('Erreur:', error);
-                afficherMessage(false, 'Erreur lors de la réservation');
+                console.error('Erreur complète:', error);
+                
+                // Message d'erreur plus détaillé
+                var errorMessage = 'Erreur lors de la réservation';
+                if (error.message && error.message !== 'Failed to fetch') {
+                    errorMessage = error.message;
+                } else if (error.message === 'Failed to fetch') {
+                    errorMessage = '❌ PROBLÈME DE CONNEXION\n\n' +
+                                 'Impossible de contacter le serveur.\n' +
+                                 '💡 Vérifiez votre connexion internet et réessayez.';
+                }
+                
+                afficherMessage(false, errorMessage);
                 
                 // Réactiver le bouton
                 btnConfirmer.disabled = false;
                 btnConfirmer.innerHTML = '<i class="bi bi-bookmark"></i> Confirmer la réservation';
             });
         }
+
+        // Gestion du modal de détails
+        document.getElementById('detailModal').addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            
+            document.getElementById('modalTitre').textContent = button.getAttribute('data-titre') || 'N/A';
+            document.getElementById('modalAuteur').textContent = button.getAttribute('data-auteur') || 'N/A';
+            document.getElementById('modalGenre').textContent = button.getAttribute('data-genre') || 'N/A';
+            document.getElementById('modalTag').textContent = button.getAttribute('data-tag') || 'N/A';
+            document.getElementById('modalEdition').textContent = button.getAttribute('data-edition') || 'N/A';
+            document.getElementById('modalMaison').textContent = button.getAttribute('data-maison') || 'N/A';
+            
+            var age = button.getAttribute('data-age');
+            document.getElementById('modalAge').textContent = age ? age + ' ans' : 'Aucune restriction';
+        });
 
         // Gestion du modal de réservation
         document.getElementById('reservationModal').addEventListener('show.bs.modal', function (event) {
@@ -406,15 +426,23 @@
             var alertClass = success ? 'alert-success' : 'alert-danger';
             var icon = success ? 'bi-check-circle' : 'bi-exclamation-triangle';
             
+            // Préserver les retours à la ligne pour les messages d'erreur
+            var formattedMessage = message.replace(/\n/g, '<br>');
+            
             container.innerHTML = `
                 <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    <i class="bi ${icon}"></i> ${message}
+                    <i class="bi ${icon}"></i> ${formattedMessage}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
+            
+            // Faire défiler vers le haut pour voir le message si c'est une erreur
+            if (!success) {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
-        // Fonctions de filtrage (code existant)
+        // Fonctions de filtrage
         function filtrerCatalogue() {
             var filterTitre = document.getElementById('filterTitre').value.toLowerCase();
             var filterAuteur = document.getElementById('filterAuteur').value.toLowerCase();

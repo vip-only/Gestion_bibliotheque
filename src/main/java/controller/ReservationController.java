@@ -25,7 +25,6 @@ public class ReservationController {
     public ResponseEntity<Map<String, Object>> reserverExemplaire(
             @RequestParam String numExemplaire,
             @RequestParam String dateReservation,
-            @RequestParam Integer idTypePret,
             HttpSession session) {
         
         Map<String, Object> response = new HashMap<>();
@@ -56,7 +55,12 @@ public class ReservationController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", e.getMessage());
+            // Préserver le message d'erreur détaillé du service
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
+                errorMessage = "Une erreur inattendue s'est produite lors de la réservation.";
+            }
+            response.put("message", errorMessage);
             return ResponseEntity.ok(response);
         }
     }
