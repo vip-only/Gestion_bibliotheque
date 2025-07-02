@@ -44,9 +44,6 @@
                     <button type="submit" class="btn btn-primary w-100">Se connecter</button>
                 </form>
                 
-                <div class="text-center mt-3">
-                    <p class="mb-0">Pas encore de compte? <a href="<%= request.getContextPath() %>/auth/register" class="text-primary">S'inscrire</a></p>
-                </div>
             </div>
         </div>
     </div>

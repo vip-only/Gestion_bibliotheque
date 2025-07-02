@@ -49,16 +49,6 @@ REM === Redémarrage Tomcat ===
 echo ------------------------------
 echo Redémarrage de Tomcat...
 echo ------------------------------
-if exist "%TOMCAT_HOME%\bin\shutdown.bat" (
-    call "%TOMCAT_HOME%\bin\shutdown.bat"
-    timeout /t 5
-)
-if exist "%TOMCAT_HOME%\bin\startup.bat" (
-    call "%TOMCAT_HOME%\bin\startup.bat"
-    echo Tomcat démarré, le déploiement devrait être effectif dans quelques secondes.
-    echo Vous pouvez vérifier l'application sur http://localhost:8080/spring-xml-example
-) else (
-    echo ATTENTION : Impossible de trouver le script de démarrage de Tomcat
-)
+
 
 pause

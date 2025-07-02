@@ -19,6 +19,9 @@
     </nav>
 
     <div class="container mt-4">
+        <!-- Message de succès/erreur -->
+        <div id="messageContainer"></div>
+
         <!-- Filtres de recherche -->
         <div class="row mb-4">
             <div class="col-12">
@@ -139,7 +142,7 @@
                                         <th>Maison d'édition</th>
                                         <th>Nb Exemplaires</th>
                                         <th>Numéros Exemplaires</th>
-                                        <th>Détails</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -163,7 +166,7 @@
                                         <td><span class="badge bg-success"><%= livre.get("nombreExemplaires") %></span></td>
                                         <td><small class="text-muted"><%= livre.get("listeExemplaires") != null ? livre.get("listeExemplaires") : "N/A" %></small></td>
                                         <td>
-                                            <button type="button" class="btn btn-info btn-sm" 
+                                            <button type="button" class="btn btn-info btn-sm me-1" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#detailModal"
                                                     data-titre="<%= livre.get("titre") %>"
@@ -174,6 +177,13 @@
                                                     data-maison="<%= livre.get("maisonEdition") %>"
                                                     data-age="<%= livre.get("ageMinimum") %>">
                                                 <i class="bi bi-info-circle"></i> Détails
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#reservationModal"
+                                                    data-livre-titre="<%= livre.get("titre") %>"
+                                                    data-exemplaires="<%= livre.get("listeExemplaires") %>">
+                                                <i class="bi bi-bookmark"></i> Réserver
                                             </button>
                                         </td>
                                     </tr>
@@ -228,8 +238,144 @@
         </div>
     </div>
 
+    <!-- Modal de réservation -->
+    <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reservationModalLabel">📖 Réserver un exemplaire</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Livre sélectionné:</strong></label>
+                        <p id="livreSelectionneReservation" class="text-primary"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="numExemplaireReservation" class="form-label">Choisir un exemplaire:</label>
+                        <select class="form-select" id="numExemplaireReservation" required>
+                            <option value="">Sélectionner un exemplaire</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="dateReservation" class="form-label">Date de récupération souhaitée:</label>
+                        <input type="date" class="form-control" id="dateReservation" required>
+                        <div class="form-text">Choisissez la date à laquelle vous souhaitez récupérer le livre</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        La durée d'emprunt sera calculée automatiquement selon votre profil et le type d'emprunt choisi.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-warning" onclick="confirmerReservation()">
+                        <i class="bi bi-bookmark"></i> Confirmer la réservation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Fonction de confirmation de réservation avec plus de logs
+        function confirmerReservation() {
+            console.log("=== DEBUT CONFIRMATION RESERVATION ===");
+            
+            var numExemplaire = document.getElementById('numExemplaireReservation').value;
+            var dateReservation = document.getElementById('dateReservation').value;
+            
+            console.log("Exemplaire sélectionné:", numExemplaire);
+            console.log("Date sélectionnée:", dateReservation);
+            
+            if (!numExemplaire) {
+                alert('Veuillez sélectionner un exemplaire');
+                return;
+            }
+            
+            if (!dateReservation) {
+                alert('Veuillez sélectionner une date de récupération');
+                return;
+            }
+            
+            // Vérifier que la date n'est pas dans le passé
+            var aujourdhui = new Date();
+            var dateChoisie = new Date(dateReservation);
+            if (dateChoisie < aujourdhui.setHours(0,0,0,0)) {
+                alert('La date de récupération ne peut pas être dans le passé');
+                return;
+            }
+            
+            // Désactiver le bouton pour éviter les doubles clics
+            var btnConfirmer = document.querySelector('#reservationModal .btn-warning');
+            btnConfirmer.disabled = true;
+            btnConfirmer.innerHTML = '<i class="bi bi-hourglass-split"></i> Réservation en cours...';
+            
+            console.log("Envoi de la requête...");
+            
+            // Envoyer la requête de réservation
+            fetch('<%= request.getContextPath() %>/adherent/reserver', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'numExemplaire=' + encodeURIComponent(numExemplaire) + 
+                      '&dateReservation=' + encodeURIComponent(dateReservation)
+            })
+            .then(response => {
+                console.log("Réponse reçue, status:", response.status);
+                if (!response.ok) {
+                    throw new Error('Erreur HTTP: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Données reçues:", data);
+                
+                // Fermer le modal
+                var modal = bootstrap.Modal.getInstance(document.getElementById('reservationModal'));
+                modal.hide();
+                
+                // Afficher le message
+                afficherMessage(data.success, data.message);
+                
+                // Réactiver le bouton
+                btnConfirmer.disabled = false;
+                btnConfirmer.innerHTML = '<i class="bi bi-bookmark"></i> Confirmer la réservation';
+                
+                if (data.success) {
+                    console.log("Réservation réussie !");
+                    // Optionnel: recharger la page pour mettre à jour les disponibilités
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur complète:', error);
+                
+                // Message d'erreur plus détaillé
+                var errorMessage = 'Erreur lors de la réservation';
+                if (error.message && error.message !== 'Failed to fetch') {
+                    errorMessage = error.message;
+                } else if (error.message === 'Failed to fetch') {
+                    errorMessage = '❌ PROBLÈME DE CONNEXION\n\n' +
+                                 'Impossible de contacter le serveur.\n' +
+                                 '💡 Vérifiez votre connexion internet et réessayez.';
+                }
+                
+                afficherMessage(false, errorMessage);
+                
+                // Réactiver le bouton
+                btnConfirmer.disabled = false;
+                btnConfirmer.innerHTML = '<i class="bi bi-bookmark"></i> Confirmer la réservation';
+            });
+        }
+
         // Gestion du modal de détails
         document.getElementById('detailModal').addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
@@ -245,7 +391,58 @@
             document.getElementById('modalAge').textContent = age ? age + ' ans' : 'Aucune restriction';
         });
 
-        // Fonctions de filtrage (inspirées de retours.jsp)
+        // Gestion du modal de réservation
+        document.getElementById('reservationModal').addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var livreTitre = button.getAttribute('data-livre-titre');
+            var exemplaires = button.getAttribute('data-exemplaires');
+            
+            // Mise à jour du titre du livre
+            document.getElementById('livreSelectionneReservation').textContent = livreTitre;
+            
+            // Mise à jour de la liste des exemplaires
+            var selectExemplaire = document.getElementById('numExemplaireReservation');
+            selectExemplaire.innerHTML = '<option value="">Sélectionner un exemplaire</option>';
+            
+            if (exemplaires && exemplaires !== 'N/A') {
+                var listeExemplaires = exemplaires.split(', ');
+                listeExemplaires.forEach(function(exemplaire) {
+                    var option = document.createElement('option');
+                    option.value = exemplaire.trim();
+                    option.textContent = exemplaire.trim();
+                    selectExemplaire.appendChild(option);
+                });
+            }
+            
+            // Définir la date minimum à aujourd'hui
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateReservation').setAttribute('min', today);
+            document.getElementById('dateReservation').value = today;
+        });
+
+        // Fonction d'affichage des messages
+        function afficherMessage(success, message) {
+            var container = document.getElementById('messageContainer');
+            var alertClass = success ? 'alert-success' : 'alert-danger';
+            var icon = success ? 'bi-check-circle' : 'bi-exclamation-triangle';
+            
+            // Préserver les retours à la ligne pour les messages d'erreur
+            var formattedMessage = message.replace(/\n/g, '<br>');
+            
+            container.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="bi ${icon}"></i> ${formattedMessage}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Faire défiler vers le haut pour voir le message si c'est une erreur
+            if (!success) {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Fonctions de filtrage
         function filtrerCatalogue() {
             var filterTitre = document.getElementById('filterTitre').value.toLowerCase();
             var filterAuteur = document.getElementById('filterAuteur').value.toLowerCase();
@@ -267,27 +464,22 @@
                 
                 var showRow = true;
                 
-                // Filtrage par titre (recherche partielle)
                 if (filterTitre && !titre.includes(filterTitre)) {
                     showRow = false;
                 }
                 
-                // Filtrage par auteur (exact)
                 if (filterAuteur && auteur !== filterAuteur) {
                     showRow = false;
                 }
                 
-                // Filtrage par genre (exact)
                 if (filterGenre && genre !== filterGenre) {
                     showRow = false;
                 }
                 
-                // Filtrage par tag (exact)
                 if (filterTag && tag !== filterTag) {
                     showRow = false;
                 }
                 
-                // Filtrage par maison d'édition (exact)
                 if (filterMaison && maison !== filterMaison) {
                     showRow = false;
                 }
@@ -296,7 +488,6 @@
                 if (showRow) visibleCount++;
             }
             
-            // Optionnel: afficher un message si aucun résultat
             if (visibleCount === 0 && (filterTitre || filterAuteur || filterGenre || filterTag || filterMaison)) {
                 console.log('Aucun livre trouvé avec ces critères');
             }
@@ -317,7 +508,7 @@
             }
         }
 
-        // Filtrage en temps réel pour le titre (comme dans retours.jsp)
+        // Filtrage en temps réel pour le titre
         document.getElementById('filterTitre').addEventListener('input', function() {
             if (this.value.length > 2) {
                 filtrerCatalogue();

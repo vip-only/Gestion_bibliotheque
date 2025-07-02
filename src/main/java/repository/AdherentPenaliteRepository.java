@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -13,6 +15,9 @@ public interface AdherentPenaliteRepository extends JpaRepository<AdherentPenali
     @Query("SELECT CASE WHEN COUNT(ap) > 0 THEN true ELSE false END FROM AdherentPenalite ap WHERE ap.adherent.idAdherent = :idAdherent AND ap.dateFin >= CURRENT_DATE")
     boolean hasPenaliteActive(@Param("idAdherent") Integer idAdherent);
 
+    @Query("SELECT CASE WHEN COUNT(ap) > 0 THEN true ELSE false END FROM AdherentPenalite ap WHERE ap.adherent.idAdherent = :idAdherent AND ap.dateFin >= :dateActuelle")
+    boolean hasPenaliteActive(@Param("idAdherent") Integer idAdherent, @Param("dateActuelle") LocalDate dateActuelle);
+    
     @Query("SELECT ap FROM AdherentPenalite ap WHERE ap.adherent.idAdherent = :idAdherent ORDER BY ap.dateFin DESC LIMIT 1")
     AdherentPenalite findDernierePenaliteByAdherent(@Param("idAdherent") Integer idAdherent);
     
