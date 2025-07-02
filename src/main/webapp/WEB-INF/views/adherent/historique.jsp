@@ -98,6 +98,7 @@
                                         <th>Date retour</th>
                                         <th>Retard (jours)</th>
                                         <th>Statut</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -130,6 +131,8 @@
                                         
                                         Object enCoursObj = emprunt.get("enCours");
                                         boolean enCours = enCoursObj != null && ((Number) enCoursObj).intValue() == 1;
+                                        
+                                        Integer idAdherentExemplaire = (Integer) emprunt.get("idAdherentExemplaire");
                                     %>
                                     <tr class="<%= rowClass %>" 
                                         data-titre="<%= emprunt.get("titreLivre") != null ? emprunt.get("titreLivre").toString().toLowerCase() : "" %>"
@@ -170,6 +173,19 @@
                                         <td>
                                             <span class="badge <%= badgeClass %>"><%= statut %></span>
                                         </td>
+                                        <td>
+                                            <% if (enCours) { %>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                        data-id-adherent-exemplaire="<%= idAdherentExemplaire %>"
+                                                        data-titre-livre="<%= emprunt.get("titreLivre") != null ? emprunt.get("titreLivre") : "" %>"
+                                                        data-num-exemplaire="<%= emprunt.get("numExemplaire") != null ? emprunt.get("numExemplaire") : "" %>"
+                                                        onclick="demanderProlongementSafe(this)">
+                                                    <i class="bi bi-calendar-plus"></i> Prolonger
+                                                </button>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
                                     </tr>
                                     <% } %>
                                 </tbody>
@@ -186,8 +202,179 @@
         </div>
     </div>
     
+    <!-- Modal de prolongement -->
+    <div class="modal fade" id="prolongementModal" tabindex="-1" aria-labelledby="prolongementModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prolongementModalLabel">📅 Demander un prolongement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="prolongementInfo">
+                        <!-- Les informations du livre seront injectées ici -->
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Votre demande sera traitée par la bibliothèque.
+                    </div>
+                    
+                    <div id="prolongementMessage"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmerProlongement">
+                        <i class="bi bi-send"></i> Envoyer la demande
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let idAdherentExemplaireActuel = null;
+        
+        // Fonction sécurisée pour demander un prolongement
+        function demanderProlongementSafe(button) {
+            const idAdherentExemplaire = button.getAttribute('data-id-adherent-exemplaire');
+            const titreLivre = button.getAttribute('data-titre-livre');
+            const numExemplaire = button.getAttribute('data-num-exemplaire');
+            
+            idAdherentExemplaireActuel = parseInt(idAdherentExemplaire);
+            
+            // Remplir les informations du livre dans le modal (pas de problème d'échappement)
+            document.getElementById('prolongementInfo').innerHTML = `
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">📚 ${titreLivre}</h6>
+                        <p class="card-text">
+                            <strong>Exemplaire:</strong> <code>${numExemplaire}</code>
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Réinitialiser le message
+            document.getElementById('prolongementMessage').innerHTML = '';
+            
+            // Réactiver le bouton
+            const btnConfirmer = document.getElementById('btnConfirmerProlongement');
+            btnConfirmer.disabled = false;
+            btnConfirmer.innerHTML = '<i class="bi bi-send"></i> Envoyer la demande';
+            
+            // Afficher le modal
+            new bootstrap.Modal(document.getElementById('prolongementModal')).show();
+        }
+        
+        // Garder l'ancienne fonction pour compatibilité (mais la rendre plus sûre)
+        function demanderProlongement(idAdherentExemplaire, titreLivre, numExemplaire) {
+            idAdherentExemplaireActuel = idAdherentExemplaire;
+            
+            // Nettoyer les chaînes pour éviter les erreurs JavaScript
+            const titreLivreClean = (titreLivre || '').replace(/['"]/g, '');
+            const numExemplaireClean = (numExemplaire || '').replace(/['"]/g, '');
+            
+            document.getElementById('prolongementInfo').innerHTML = `
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">📚 ${titreLivreClean}</h6>
+                        <p class="card-text">
+                            <strong>Exemplaire:</strong> <code>${numExemplaireClean}</code>
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('prolongementMessage').innerHTML = '';
+            
+            const btnConfirmer = document.getElementById('btnConfirmerProlongement');
+            btnConfirmer.disabled = false;
+            btnConfirmer.innerHTML = '<i class="bi bi-send"></i> Envoyer la demande';
+            
+            new bootstrap.Modal(document.getElementById('prolongementModal')).show();
+        }
+        
+        // Gestionnaire pour confirmer le prolongement
+        document.getElementById('btnConfirmerProlongement').addEventListener('click', function() {
+            const btnConfirmer = this;
+            const messageDiv = document.getElementById('prolongementMessage');
+            
+            // Vérifier qu'un emprunt est sélectionné
+            if (!idAdherentExemplaireActuel) {
+                messageDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Erreur: Aucun emprunt sélectionné.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Désactiver le bouton et afficher le loader
+            btnConfirmer.disabled = true;
+            btnConfirmer.innerHTML = '<i class="bi bi-hourglass-split"></i> Envoi en cours...';
+            
+            // Envoyer la demande avec les bons headers
+            fetch('<%= request.getContextPath() %>/adherent/prolongement', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json'
+                },
+                body: 'idAdherentExemplaire=' + encodeURIComponent(idAdherentExemplaireActuel)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data received:', data);
+                
+                if (data.success) {
+                    messageDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i> ${data.message}
+                        </div>
+                    `;
+                    
+                    // Fermer le modal après 2 secondes et recharger la page
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('prolongementModal')).hide();
+                        location.reload();
+                    }, 2000);
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> ${data.message}
+                        </div>
+                    `;
+                    
+                    // Réactiver le bouton
+                    btnConfirmer.disabled = false;
+                    btnConfirmer.innerHTML = '<i class="bi bi-send"></i> Envoyer la demande';
+                }
+            })
+            .catch(error => {
+                console.error('Error details:', error);
+                messageDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Erreur de connexion. Veuillez réessayer.
+                    </div>
+                `;
+                
+                // Réactiver le bouton
+                btnConfirmer.disabled = false;
+                btnConfirmer.innerHTML = '<i class="bi bi-send"></i> Envoyer la demande';
+            });
+        });
+        
         // Fonctions de filtrage
         function filtrerHistorique() {
             var filterTitre = document.getElementById('filterTitre').value.toLowerCase();

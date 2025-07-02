@@ -49,66 +49,66 @@ public class ReservationService {
             System.out.println("=== DEBUT RESERVATION ===");
             System.out.println("Exemplaire: " + numExemplaire + ", Adherent: " + idAdherent + ", Date: " + dateReservation);
             
-            // 1. Récupérer l'adhérent
+            // 1. Recuperer l'adherent
             Adherent adherent = adherentRepository.findById(idAdherent)
-                .orElseThrow(() -> new Exception("❌ COMPTE INTROUVABLE : Votre compte adhérent est introuvable dans notre système. Veuillez vous reconnecter ou contacter la bibliothèque."));
-            System.out.println("Adhérent trouvé: " + adherent.getNom());
+                .orElseThrow(() -> new Exception("COMPTE INTROUVABLE : Votre compte adherent est introuvable dans notre systeme. Veuillez vous reconnecter ou contacter la bibliotheque."));
+            System.out.println("Adherent trouve: " + adherent.getNom());
             
-            // 2. Vérifier l'abonnement actif
+            // 2. Verifier l'abonnement actif
             verifierAbonnementActif(adherent);
             
-            // 3. Vérifier les pénalités actives avec détails
+            // 3. Verifier les penalites actives avec details
             verifierPenalitesActives(adherent.getIdAdherent());
             
-            // 4. Récupérer et vérifier l'exemplaire
+            // 4. Recuperer et verifier l'exemplaire
             Exemplaire exemplaire = verifierExemplaire(numExemplaire);
             
-            // 5. Vérifier l'âge requis pour le livre
+            // 5. Verifier l'age requis pour le livre
             verifierAgeMinimum(adherent, exemplaire);
             
-            // 6. Vérifier le quota avec détails
+            // 6. Verifier le quota avec details
             verifierQuota(adherent);
             
-            // 7. Vérifier que la date de réservation est valide
+            // 7. Verifier que la date de reservation est valide
             verifierDateReservation(dateReservation);
             
-            // 8. Créer la réservation
+            // 8. Creer la reservation
             Reservation reservation = creerReservation(adherent, exemplaire, dateReservation);
             
             System.out.println("=== RESERVATION REUSSIE ===");
-            return "✅ RÉSERVATION CONFIRMÉE !\n" +
-                   "📚 Livre : " + exemplaire.getLivre().getTitre() + "\n" +
-                   "🏷️ Exemplaire : " + numExemplaire + "\n" +
-                   "📅 À récupérer le : " + dateReservation + "\n" +
-                   "⏰ À retourner avant le : " + reservation.getDateFin() + "\n" +
-                   "📍 Rendez-vous à la bibliothèque pour récupérer votre livre !";
+            return "RESERVATION CONFIRMEE !\n" +
+                   "Livre : " + exemplaire.getLivre().getTitre() + "\n" +
+                   "Exemplaire : " + numExemplaire + "\n" +
+                   "A recuperer le : " + dateReservation + "\n" +
+                   "A retourner avant le : " + reservation.getDateFin() + "\n" +
+                   "Rendez-vous a la bibliotheque pour recuperer votre livre !";
                    
         } catch (Exception e) {
-            System.err.println("ERREUR lors de la réservation: " + e.getMessage());
+            System.err.println("ERREUR lors de la reservation: " + e.getMessage());
             e.printStackTrace();
-            throw e; // Relancer l'exception avec le message détaillé
+            throw e; // Relancer l'exception avec le message detaille
         }
     }
     
     private void verifierAbonnementActif(Adherent adherent) throws Exception {
-        // Vérifier si l'adhérent a un profil configuré
+        // Verifier si l'adherent a un profil configure
         if (adherent.getProfil() == null) {
-            throw new Exception("❌ PROFIL MANQUANT : Votre profil adhérent n'est pas configuré correctement. Contactez la bibliothèque pour résoudre ce problème.");
+            throw new Exception("PROFIL MANQUANT : Votre profil adherent n'est pas configure correctement. Contactez la bibliotheque pour resoudre ce probleme.");
         }
         
-        // Utiliser la méthode isAbonnementActif qui retourne 1 si actif, 0 sinon
+        // Utiliser la methode isAbonnementActif qui retourne 1 si actif, 0 sinon
         Integer abonnementActif = adherentAbonnementRepository.isAbonnementActif(adherent.getIdAdherent());
         
         if (abonnementActif == null || abonnementActif == 0) {
-            throw new Exception("❌ ABONNEMENT EXPIRÉ : Votre abonnement à la bibliothèque a expiré ou n'existe pas.\n\n" +
-                              "💡 SOLUTIONS :\n" +
-                              "• Renouvelez votre abonnement à la bibliothèque\n" +
-                              "• Contactez la bibliothèque pour vérifier votre statut\n" +
-                              "• Vérifiez que votre inscription est toujours valide\n\n" +
-                              "📞 Contactez la bibliothèque pour plus d'informations.");
+            throw new Exception("ABONNEMENT EXPIRE : Votre abonnement a la bibliotheque a expire ou n'existe pas.\n\n" +
+                              "SOLUTIONS :\n" +
+                              "- Renouvelez votre abonnement a la bibliotheque\n" +
+                              "- Contactez la bibliotheque pour verifier votre statut\n" +
+                              "- Verifiez que votre inscription est toujours valide\n\n" +
+                              "Contactez la bibliotheque pour plus d'informations.");
         }
         
-        System.out.println("Abonnement actif vérifié pour l'adhérent: " + adherent.getNom());
+        System.out.println("Abonnement actif verifie pour l'adherent: " + adherent.getNom());
     }
     
     private void verifierPenalitesActives(Integer idAdherent) throws Exception {
@@ -116,24 +116,24 @@ public class ReservationService {
         if (hasPenalite) {
             List<AdherentPenalite> penalitesActives = adherentPenaliteRepository.findPenalitesActivesByAdherent(idAdherent);
             
-            StringBuilder message = new StringBuilder("🚫 COMPTE SUSPENDU - PÉNALITÉ ACTIVE\n\n");
+            StringBuilder message = new StringBuilder("COMPTE SUSPENDU - PENALITE ACTIVE\n\n");
             message.append("Votre compte est temporairement suspendu en raison de retards de livres.\n\n");
             
             if (penalitesActives != null && !penalitesActives.isEmpty()) {
-                message.append("📋 DÉTAILS DES PÉNALITÉS :\n");
+                message.append("DETAILS DES PENALITES :\n");
                 for (AdherentPenalite penalite : penalitesActives) {
                     long joursRestants = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), penalite.getDateFin());
-                    message.append("• Période : du ").append(penalite.getDateDebut())
+                    message.append("- Periode : du ").append(penalite.getDateDebut())
                            .append(" au ").append(penalite.getDateFin()).append("\n");
-                    message.append("• Temps restant : ").append(joursRestants).append(" jour(s)\n");
-                    message.append("• Motif : Retour en retard\n\n");
+                    message.append("- Temps restant : ").append(joursRestants).append(" jour(s)\n");
+                    message.append("- Motif : Retour en retard\n\n");
                 }
             }
             
-            message.append("💡 SOLUTIONS :\n");
-            message.append("• Attendez la fin de la période de pénalité\n");
-            message.append("• Contactez la bibliothèque si vous pensez qu'il y a une erreur\n");
-            message.append("• Vérifiez si vous avez des livres en retard à retourner");
+            message.append("SOLUTIONS :\n");
+            message.append("- Attendez la fin de la periode de penalite\n");
+            message.append("- Contactez la bibliotheque si vous pensez qu'il y a une erreur\n");
+            message.append("- Verifiez si vous avez des livres en retard a retourner");
             
             throw new Exception(message.toString());
         }
@@ -142,22 +142,22 @@ public class ReservationService {
     private Exemplaire verifierExemplaire(String numExemplaire) throws Exception {
         Exemplaire exemplaire = exemplaireRepository.findByNumExemplaire(numExemplaire);
         if (exemplaire == null) {
-            throw new Exception("❌ EXEMPLAIRE INTROUVABLE : L'exemplaire " + numExemplaire + " n'existe pas dans notre système.\n" +
-                              "💡 Vérifiez le numéro d'exemplaire ou choisissez un autre exemplaire.");
+            throw new Exception("EXEMPLAIRE INTROUVABLE : L'exemplaire " + numExemplaire + " n'existe pas dans notre systeme.\n" +
+                              "Verifiez le numero d'exemplaire ou choisissez un autre exemplaire.");
         }
         
-        // Vérifier que l'exemplaire n'est pas emprunté
+        // Verifier que l'exemplaire n'est pas emprunte
         boolean estEmprunte = adherentExemplaireRepository.existsByExemplaireAndDateRetourIsNull(exemplaire);
         if (estEmprunte) {
-            throw new Exception("📚 EXEMPLAIRE EMPRUNTÉ : L'exemplaire " + numExemplaire + " est actuellement emprunté par un autre adhérent.\n" +
-                              "💡 Choisissez un autre exemplaire du même livre ou patientez jusqu'à son retour.");
+            throw new Exception("EXEMPLAIRE EMPRUNTE : L'exemplaire " + numExemplaire + " est actuellement emprunte par un autre adherent.\n" +
+                              "Choisissez un autre exemplaire du meme livre ou patientez jusqu'a son retour.");
         }
         
-        // Vérifier qu'il n'y a pas déjà une réservation active
+        // Verifier qu'il n'y a pas deja une reservation active
         boolean estReserve = reservationRepository.existsByExemplaireAndDateFinAfter(exemplaire, LocalDate.now());
         if (estReserve) {
-            throw new Exception("📋 EXEMPLAIRE DÉJÀ RÉSERVÉ : L'exemplaire " + numExemplaire + " est déjà réservé par un autre adhérent.\n" +
-                              "💡 Choisissez un autre exemplaire disponible du même livre.");
+            throw new Exception("EXEMPLAIRE DEJA RESERVE : L'exemplaire " + numExemplaire + " est deja reserve par un autre adherent.\n" +
+                              "Choisissez un autre exemplaire disponible du meme livre.");
         }
         
         return exemplaire;
@@ -169,11 +169,11 @@ public class ReservationService {
             int ageMinimum = exemplaire.getLivre().getAgesup();
             
             if (ageAdherent < ageMinimum) {
-                throw new Exception("🔞 ÂGE INSUFFISANT : Vous n'avez pas l'âge requis pour emprunter ce livre.\n\n" +
-                                  "📚 Livre : " + exemplaire.getLivre().getTitre() + "\n" +
-                                  "🎂 Votre âge : " + ageAdherent + " ans\n" +
-                                  "⚠️ Âge minimum requis : " + ageMinimum + " ans\n\n" +
-                                  "💡 Revenez quand vous aurez " + ageMinimum + " ans ou choisissez un autre livre adapté à votre âge.");
+                throw new Exception("AGE INSUFFISANT : Vous n'avez pas l'age requis pour emprunter ce livre.\n\n" +
+                                  "Livre : " + exemplaire.getLivre().getTitre() + "\n" +
+                                  "Votre age : " + ageAdherent + " ans\n" +
+                                  "Age minimum requis : " + ageMinimum + " ans\n\n" +
+                                  "Revenez quand vous aurez " + ageMinimum + " ans ou choisissez un autre livre adapte a votre age.");
             }
         }
     }
@@ -181,7 +181,7 @@ public class ReservationService {
     private void verifierQuota(Adherent adherent) throws Exception {
         Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
         if (quotaMax == null) {
-            quotaMax = 3; // Quota par défaut
+            quotaMax = 3; // Quota par defaut
         }
         
         Integer empruntsActuels = adherentExemplaireRepository.countEmpruntsActifs(adherent.getIdAdherent());
@@ -195,17 +195,17 @@ public class ReservationService {
         if (totalActuel >= quotaMax) {
             String profilLibelle = adherent.getProfil().getLibelle();
             
-            throw new Exception("📊 QUOTA DÉPASSÉ : Vous avez atteint votre limite d'emprunts et réservations.\n\n" +
-                              "👤 Votre profil : " + profilLibelle + "\n" +
-                              "📈 Quota autorisé : " + quotaMax + " livre(s)\n" +
-                              "📚 Actuellement :\n" +
-                              "   • " + empruntsActuels + " emprunt(s) en cours\n" +
-                              "   • " + reservationsActuelles + " réservation(s) active(s)\n" +
-                              "   • Total : " + totalActuel + "/" + quotaMax + "\n\n" +
-                              "💡 SOLUTIONS :\n" +
-                              "• Retournez des livres empruntés\n" +
-                              "• Annulez des réservations non utilisées\n" +
-                              "• Patientez que vos réservations arrivent à échéance");
+            throw new Exception("QUOTA DEPASSE : Vous avez atteint votre limite d'emprunts et reservations.\n\n" +
+                              "Votre profil : " + profilLibelle + "\n" +
+                              "Quota autorise : " + quotaMax + " livre(s)\n" +
+                              "Actuellement :\n" +
+                              "   - " + empruntsActuels + " emprunt(s) en cours\n" +
+                              "   - " + reservationsActuelles + " reservation(s) active(s)\n" +
+                              "   - Total : " + totalActuel + "/" + quotaMax + "\n\n" +
+                              "SOLUTIONS :\n" +
+                              "- Retournez des livres empruntes\n" +
+                              "- Annulez des reservations non utilisees\n" +
+                              "- Patientez que vos reservations arrivent a echeance");
         }
     }
     
@@ -213,36 +213,36 @@ public class ReservationService {
         LocalDate aujourdhui = LocalDate.now();
         
         if (dateReservation.isBefore(aujourdhui)) {
-            throw new Exception("📅 DATE INVALIDE : La date de récupération ne peut pas être dans le passé.\n\n" +
-                              "🗓️ Date choisie : " + dateReservation + "\n" +
-                              "📍 Date actuelle : " + aujourdhui + "\n\n" +
-                              "💡 Choisissez une date à partir d'aujourd'hui.");
+            throw new Exception("DATE INVALIDE : La date de recuperation ne peut pas etre dans le passe.\n\n" +
+                              "Date choisie : " + dateReservation + "\n" +
+                              "Date actuelle : " + aujourdhui + "\n\n" +
+                              "Choisissez une date a partir d'aujourd'hui.");
         }
         
-        // Vérifier que la date n'est pas trop loin dans le futur (max 30 jours)
+        // Verifier que la date n'est pas trop loin dans le futur (max 30 jours)
         LocalDate dateLimite = aujourdhui.plusDays(30);
         if (dateReservation.isAfter(dateLimite)) {
-            throw new Exception("📅 DATE TROP LOINTAINE : La réservation ne peut pas être faite plus de 30 jours à l'avance.\n\n" +
-                              "🗓️ Date choisie : " + dateReservation + "\n" +
-                              "⏰ Date limite autorisée : " + dateLimite + "\n\n" +
-                              "💡 Choisissez une date dans les 30 prochains jours.");
+            throw new Exception("DATE TROP LOINTAINE : La reservation ne peut pas etre faite plus de 30 jours a l'avance.\n\n" +
+                              "Date choisie : " + dateReservation + "\n" +
+                              "Date limite autorisee : " + dateLimite + "\n\n" +
+                              "Choisissez une date dans les 30 prochains jours.");
         }
     }
     
     private Reservation creerReservation(Adherent adherent, Exemplaire exemplaire, LocalDate dateReservation) throws Exception {
         try {
-            // Utiliser le type de prêt par défaut (à domicile = 1)
+            // Utiliser le type de pret par defaut (a domicile = 1)
             Integer idTypePret = 1;
             
-            // Calculer la date de fin selon la durée d'emprunt du profil
+            // Calculer la date de fin selon la duree d'emprunt du profil
             Integer nbJours = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(
                 adherent.getProfil().getIdProfil(), 
                 idTypePret
             );
             if (nbJours == null) {
-                // Valeurs par défaut selon le profil visible dans insert.sql
+                // Valeurs par defaut selon le profil visible dans insert.sql
                 switch (adherent.getProfil().getIdProfil()) {
-                    case 1: nbJours = 14; break; // Étudiant
+                    case 1: nbJours = 14; break; // Etudiant
                     case 2: nbJours = 30; break; // Prof
                     case 3: nbJours = 20; break; // Pro
                     case 4: nbJours = 5; break;  // Anonyme
@@ -251,9 +251,9 @@ public class ReservationService {
             }
             
             LocalDate dateFin = dateReservation.plusDays(nbJours);
-            System.out.println("Date fin calculée: " + dateFin + " (+" + nbJours + " jours)");
+            System.out.println("Date fin calculee: " + dateFin + " (+" + nbJours + " jours)");
             
-            // Créer la réservation
+            // Creer la reservation
             Reservation reservation = new Reservation();
             reservation.setAdherent(adherent);
             reservation.setExemplaire(exemplaire);
@@ -262,22 +262,22 @@ public class ReservationService {
             
             try {
                 reservation = reservationRepository.save(reservation);
-                System.out.println("✅ Réservation créée avec ID: " + reservation.getIdReservation());
+                System.out.println("Reservation creee avec ID: " + reservation.getIdReservation());
             } catch (Exception e) {
-                System.err.println("❌ ERREUR lors de la sauvegarde de la réservation: " + e.getMessage());
-                throw new Exception("Erreur lors de la création de la réservation: " + e.getMessage());
+                System.err.println("ERREUR lors de la sauvegarde de la reservation: " + e.getMessage());
+                throw new Exception("Erreur lors de la creation de la reservation: " + e.getMessage());
             }
             
-            // Créer la liaison ReservationEtat avec idEtat = 1 directement
+            // Creer la liaison ReservationEtat avec idEtat = 1 directement
             try {
-                System.out.println("📝 Création de ReservationEtat avec idEtat = 1...");
-                System.out.println("   - Réservation ID: " + reservation.getIdReservation());
-                System.out.println("   - État ID: 1 (en cours)");
+                System.out.println("Creation de ReservationEtat avec idEtat = 1...");
+                System.out.println("   - Reservation ID: " + reservation.getIdReservation());
+                System.out.println("   - Etat ID: 1 (en cours)");
                 System.out.println("   - Date: " + LocalDate.now());
                 
-                // Récupérer l'état avec ID = 1
+                // Recuperer l'etat avec ID = 1
                 Etat etatEnCours = etatRepository.findById(1)
-                    .orElseThrow(() -> new Exception("État avec ID=1 introuvable"));
+                    .orElseThrow(() -> new Exception("Etat avec ID=1 introuvable"));
                 
                 ReservationEtat reservationEtat = new ReservationEtat();
                 reservationEtat.setReservation(reservation);
@@ -285,24 +285,23 @@ public class ReservationService {
                 reservationEtat.setDateEtat(LocalDate.now());
                 
                 reservationEtat = reservationEtatRepository.save(reservationEtat);
-                System.out.println("✅ ReservationEtat créé avec ID: " + reservationEtat.getIdReservationEtat());
+                System.out.println("ReservationEtat cree avec ID: " + reservationEtat.getIdReservationEtat());
                 
             } catch (Exception e) {
-                System.err.println("❌ ERREUR lors de la création de ReservationEtat: " + e.getMessage());
+                System.err.println("ERREUR lors de la creation de ReservationEtat: " + e.getMessage());
                 e.printStackTrace();
                 
-                // Même si ReservationEtat échoue, on garde la réservation
-                System.out.println("⚠️ La réservation est créée mais sans suivi d'état");
+                System.out.println("La reservation est creee mais sans suivi d'etat");
             }
             
             return reservation;
             
         } catch (Exception e) {
-            System.err.println("❌ ERREUR GLOBALE dans creerReservation: " + e.getMessage());
+            System.err.println("ERREUR GLOBALE dans creerReservation: " + e.getMessage());
             e.printStackTrace();
-            throw new Exception("❌ ERREUR TECHNIQUE : Une erreur est survenue lors de la création de votre réservation.\n" +
-                          "💡 Veuillez réessayer ou contacter la bibliothèque si le problème persiste.\n" +
-                          "🔧 Détail technique : " + e.getMessage());
+            throw new Exception("ERREUR TECHNIQUE : Une erreur est survenue lors de la creation de votre reservation.\n" +
+                          "Veuillez reessayer ou contacter la bibliotheque si le probleme persiste.\n" +
+                          "Detail technique : " + e.getMessage());
         }
     }
     

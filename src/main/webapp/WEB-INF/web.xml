@@ -40,4 +40,9 @@
             <page-encoding>UTF-8</page-encoding>
         </jsp-property-group>
     </jsp-config>
+    <context-param>
+        <param-name>org.apache.jasper.compiler.TldScanner.scanAllDirectories</param-name>
+        <param-value>false</param-value>
+    </context-param>
+
 </web-app>
