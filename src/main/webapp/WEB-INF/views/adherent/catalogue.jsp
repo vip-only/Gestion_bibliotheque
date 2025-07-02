@@ -12,6 +12,7 @@
         <div class="container-fluid">
             <span class="navbar-brand">📚 Catalogue - Bibliothèque</span>
             <div class="navbar-nav ms-auto">
+                <a href="<%= request.getContextPath() %>/adherent/historique" class="btn btn-outline-light btn-sm me-2">📖 Mes historiques</a>
                 <span class="navbar-text me-3">Bonjour, ${adherent.nom}</span>
                 <a href="<%= request.getContextPath() %>/auth/logout" class="btn btn-outline-light btn-sm">Déconnexion</a>
             </div>
