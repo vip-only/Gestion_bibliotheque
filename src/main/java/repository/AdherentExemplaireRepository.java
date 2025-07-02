@@ -117,6 +117,45 @@ public interface AdherentExemplaireRepository extends JpaRepository<AdherentExem
     @Query(value = """
         SELECT 
             ae.idAdherentExemplaire,
+            ae.dateEmprunt,
+            ae.dateRetour,
+            ae.dateLimite,
+            e.numExemplaire,
+            l.titre as titreLivre,
+            l.edition,
+            aut.nom as auteur,
+            tp.libelle as typePret,
+            CASE 
+                WHEN ae.dateRetour IS NULL THEN 
+                    CASE 
+                        WHEN DATEDIFF(CURDATE(), ae.dateLimite) > 0 THEN 'En retard'
+                        WHEN DATEDIFF(CURDATE(), ae.dateLimite) >= -2 THEN 'Bientôt échéance'
+                        ELSE 'En cours'
+                    END
+                WHEN DATEDIFF(ae.dateRetour, ae.dateLimite) > 0 THEN 'Retourné en retard'
+                ELSE 'Retourné à temps'
+            END as statut,
+            CASE 
+                WHEN ae.dateRetour IS NULL THEN DATEDIFF(CURDATE(), ae.dateLimite)
+                ELSE DATEDIFF(ae.dateRetour, ae.dateLimite)
+            END as joursRetard,
+            CASE 
+                WHEN ae.dateRetour IS NULL THEN 1
+                ELSE 0
+            END as enCours
+        FROM AdherentExemplaire ae
+        INNER JOIN Exemplaire e ON ae.idExemplaire = e.idExemplaire
+        INNER JOIN Livre l ON e.idLivre = l.idLivre
+        LEFT JOIN Auteur aut ON l.idAuteur = aut.idAuteur
+        INNER JOIN TypePret tp ON ae.idTypePret = tp.idTypePret
+        WHERE ae.idAdherent = :idAdherent
+        ORDER BY ae.dateEmprunt DESC
+        """, nativeQuery = true)
+    List<Map<String, Object>> findHistoriqueByAdherent(@Param("idAdherent") Integer idAdherent);
+    
+    @Query(value = """
+        SELECT 
+            ae.idAdherentExemplaire,
             a.nom as nomAdherent,
             a.email as emailAdherent,
             p.libelle as profilAdherent,
