@@ -33,13 +33,11 @@ public class ProlongementService {
             System.out.println("idAdherentExemplaire: " + idAdherentExemplaire);
             System.out.println("idAdherent: " + idAdherent);
             
-            // Recuperer l'emprunt
             AdherentExemplaire adherentExemplaire = adherentExemplaireRepository.findById(idAdherentExemplaire)
                     .orElseThrow(() -> new Exception("Emprunt introuvable"));
             
             System.out.println("Emprunt trouve: " + adherentExemplaire.getIdAdherentExemplaire());
             
-            // Verifier que l'emprunt appartient a l'adherent connecte
             if (!adherentExemplaire.getAdherent().getIdAdherent().equals(idAdherent)) {
                 throw new Exception("Vous n'etes pas autorise a prolonger cet emprunt");
             }
@@ -49,15 +47,8 @@ public class ProlongementService {
                 throw new Exception("Impossible de prolonger un emprunt deja retourne");
             }
             
-            // Verifier qu'il n'y a pas deja une demande de prolongement en cours
-            Integer countDemandesEnCours = prolongementExemplaireRepository.countByAdherentExemplaireAndEtatEnCours(idAdherentExemplaire);
-            if (countDemandesEnCours != null && countDemandesEnCours > 0) {
-                throw new Exception("Une demande de prolongement est déjà en cours pour cet emprunt");
-            }
-            
-            System.out.println("Aucune demande en cours trouvée, création du prolongement...");
-            
-            // Calculer la duree de prolongement selon le profil et le type de pret
+            // A faire test réservation
+                   
             Integer dureeEmprunt = null;
             try {
                 dureeEmprunt = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(
@@ -69,7 +60,6 @@ public class ProlongementService {
             }
             
             if (dureeEmprunt == null) {
-                // Valeurs par defaut selon le profil
                 Integer idProfil = adherentExemplaire.getAdherent().getProfil().getIdProfil();
                 switch (idProfil) {
                     case 1: dureeEmprunt = 14; break; // Etudiant
@@ -83,7 +73,6 @@ public class ProlongementService {
                 System.out.println("Duree trouvee dans la base: " + dureeEmprunt + " jours");
             }
             
-            // Creer le ProlongementExemplaire
             ProlongementExemplaire prolongementExemplaire = new ProlongementExemplaire();
             prolongementExemplaire.setAdherentExemplaire(adherentExemplaire);
             prolongementExemplaire.setProlongement(dureeEmprunt);
@@ -91,7 +80,6 @@ public class ProlongementService {
             prolongementExemplaire = prolongementExemplaireRepository.save(prolongementExemplaire);
             System.out.println("ProlongementExemplaire cree avec ID: " + prolongementExemplaire.getIdProlongementExemplaire());
             
-            // Recuperer l'etat "en cours" (idEtat = 1)
             Etat etatEnCours = etatRepository.findById(1)
                     .orElseThrow(() -> new Exception("Etat avec ID=1 introuvable"));
             

@@ -15,7 +15,6 @@ public class JourFerieService {
     private JourFerieRepository jourFerieRepository;
     
     public LocalDate ajusterDateLimite(LocalDate dateLimite) {
-        // Ajuster pour éviter les weekends et jours fériés
         LocalDate dateAjustee = dateLimite;
         
         while (isJourNonOuvrable(dateAjustee)) {
