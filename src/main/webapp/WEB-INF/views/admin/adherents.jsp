@@ -265,6 +265,7 @@
                                                 <th>Abonnement expiré</th>
                                                 <th>Emprunts en cours</th>
                                                 <th>Statut</th>
+                                                <th>Actions</th> <!-- ⬅️ NOUVELLE COLONNE -->
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -308,6 +309,19 @@
                                                     <span class="badge bg-warning text-dark">
                                                         <i class="bi bi-exclamation-triangle"></i> Inactif
                                                     </span>
+                                                </td>
+                                                <td> <!-- ⬅️ NOUVELLE COLONNE D'ACTIONS -->
+                                                    <button type="button" 
+                                                            class="btn btn-success btn-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#renouvelerAbonnementModal"
+                                                            data-id-adherent="<%= adherent.get("idAdherent") %>"
+                                                            data-nom-adherent="<%= adherent.get("nom") %>"
+                                                            data-email-adherent="<%= adherent.get("email") %>"
+                                                            data-profil-adherent="<%= adherent.get("profil") %>"
+                                                            data-date-fin-actuelle="<%= adherent.get("dateFinAbonnement") %>">
+                                                        <i class="bi bi-arrow-clockwise"></i> Renouveler
+                                                    </button>
                                                 </td>
                                             </tr>
                                             <% } %>
@@ -538,6 +552,89 @@
         </div>
     </div>
 
+    <!-- Modal de renouvellement d'abonnement -->
+    <div class="modal fade" id="renouvelerAbonnementModal" tabindex="-1" aria-labelledby="renouvelerAbonnementModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="renouvelerAbonnementModalLabel">🔄 Renouveler l'abonnement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formRenouvelerAbonnement">
+                    <div class="modal-body">
+                        <div id="messageRenouvellement"></div>
+                        
+                        <input type="hidden" id="idAdherentRenouvellement" name="idAdherent">
+                        
+                        <div class="mb-3">
+                            <h6>Informations de l'adhérent :</h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Nom :</strong> <span id="nomAdherentRenouvellement"></span>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Email :</strong> <span id="emailAdherentRenouvellement"></span>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Profil :</strong> <span id="profilAdherentRenouvellement"></span>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Expiré le :</strong> <span id="dateFinActuelleRenouvellement" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="dateDebutRenouvellement" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="dateDebutRenouvellement" name="dateDebut" required>
+                                    <div class="invalid-feedback">La date de début est requise</div>
+                                    <div class="form-text">Date d'activation du nouvel abonnement</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="dureeRenouvellement" class="form-label">Durée d'abonnement <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="dureeRenouvellement" name="dureeAbonnement" required>
+                                        <option value="">Sélectionner la durée</option>
+                                        <option value="30">1 mois</option>
+                                        <option value="90">3 mois</option>
+                                        <option value="180">6 mois</option>
+                                        <option value="365" selected>1 an</option>
+                                    </select>
+                                    <div class="invalid-feedback">La durée d'abonnement est requise</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="dateFinRenouvellement" class="form-label">Date de fin d'abonnement</label>
+                            <input type="date" class="form-control" id="dateFinRenouvellement" name="dateFin" readonly>
+                            <div class="form-text">Calculée automatiquement selon la durée sélectionnée</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Information :</strong> Un nouvel abonnement sera créé pour cet adhérent. 
+                            L'ancien abonnement expiré restera dans l'historique.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success" id="btnRenouvelerAbonnement">
+                            <i class="bi bi-arrow-clockwise"></i> Renouveler l'abonnement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
 console.log('=== SCRIPT CHARGÉ ===');
@@ -739,6 +836,314 @@ document.getElementById('nouvelAdherentModal').addEventListener('show.bs.modal',
     }, 100);
 });
 
+// Gestion du formulaire de renouvellement d'abonnement
+document.getElementById('formRenouvelerAbonnement').addEventListener('submit', function(e) {
+    console.log('=== FORMULAIRE DE RENOUVELLEMENT SOUMIS ===');
+    e.preventDefault();
+    
+    const btnRenouveler = document.getElementById('btnRenouvelerAbonnement');
+    const messageDiv = document.getElementById('messageRenouvellement');
+    
+    console.log('Prévention de la soumission normale réussie');
+    
+    // Validation des champs
+    if (!this.checkValidity()) {
+        console.log('Formulaire de renouvellement invalide');
+        e.stopPropagation();
+        this.classList.add('was-validated');
+        return;
+    }
+    
+    // Désactiver le bouton et afficher le loader
+    btnRenouveler.disabled = true;
+    btnRenouveler.innerHTML = '<i class="bi bi-hourglass-split"></i> Renouvellement en cours...';
+    
+    // Préparer les données
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    
+    console.log('Données de renouvellement préparées:', data);
+    
+    const url = '<%= request.getContextPath() %>/admin/renouveler-abonnement';
+    console.log('URL de la requête de renouvellement:', url);
+    
+    // Envoyer la requête AJAX
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+            throw new Error('Erreur HTTP ' + response.status);
+        }
+        
+        return response.text();
+    })
+    .then(text => {
+        console.log('Réponse brute de renouvellement:', text);
+        
+        try {
+            const responseData = JSON.parse(text);
+            console.log('Réponse JSON de renouvellement:', responseData);
+            
+            if (responseData.success) {
+                // ⬇️ CORRECTION: Utiliser JavaScript pour remplacer les \n
+                const messageFormatted = responseData.message.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = 
+                    '<div class="alert alert-success">' +
+                        '<i class="bi bi-check-circle"></i> ' + messageFormatted +
+                    '</div>';
+                
+                // Fermer le modal après 3 secondes et recharger la page
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('renouvelerAbonnementModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    location.reload();
+                }, 3000);
+            } else {
+                // ⬇️ CORRECTION: Gérer aussi les messages d'erreur
+                const errorFormatted = responseData.message.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = 
+                    '<div class="alert alert-danger">' +
+                        '<i class="bi bi-exclamation-triangle"></i> ' + errorFormatted +
+                    '</div>';
+            }
+        } catch (e) {
+            console.error('Erreur de parsing JSON:', e);
+            messageDiv.innerHTML = 
+                '<div class="alert alert-danger">' +
+                    '<i class="bi bi-exclamation-triangle"></i> Réponse invalide du serveur: ' + text +
+                '</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Erreur fetch de renouvellement:', error);
+        messageDiv.innerHTML = 
+            '<div class="alert alert-danger">' +
+                '<i class="bi bi-exclamation-triangle"></i> Erreur: ' + error.message +
+            '</div>';
+    })
+    .finally(() => {
+        // Réactiver le bouton
+        btnRenouveler.disabled = false;
+        btnRenouveler.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Renouveler l\'abonnement';
+        console.log('Traitement de renouvellement terminé');
+    });
+});
+
+// Réinitialiser le formulaire à l'ouverture du modal de renouvellement
+document.getElementById('renouvelerAbonnementModal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget; // Bouton qui a déclenché le modal
+    const idAdherent = button.getAttribute('data-id-adherent');
+    const nomAdherent = button.getAttribute('data-nom-adherent');
+    const emailAdherent = button.getAttribute('data-email-adherent');
+    const profilAdherent = button.getAttribute('data-profil-adherent');
+    const dateFinActuelle = button.getAttribute('data-date-fin-actuelle');
+    
+    // Remplir les informations de l'adhérent dans le modal
+    document.getElementById('idAdherentRenouvellement').value = idAdherent;
+    document.getElementById('nomAdherentRenouvellement').innerText = nomAdherent;
+    document.getElementById('emailAdherentRenouvellement').innerText = emailAdherent;
+    document.getElementById('profilAdherentRenouvellement').innerText = profilAdherent;
+    document.getElementById('dateFinActuelleRenouvellement').innerText = dateFinActuelle;
+    
+    // Réinitialiser les messages
+    const messageDiv = document.getElementById('messageRenouvellement');
+    if (messageDiv) {
+        messageDiv.innerHTML = '';
+    }
+    
+    // Calculer la date de fin d'abonnement par défaut (1 an à partir d'aujourd'hui)
+    const dateFinInput = document.getElementById('dateFinRenouvellement');
+    const aujourdhui = new Date();
+    const dateFin = new Date(aujourdhui.getTime() + (365 * 24 * 60 * 60 * 1000));
+    dateFinInput.value = dateFin.toISOString().split('T')[0];
+});
+
+// Calcul automatique de la date de fin pour le renouvellement
+document.getElementById('dureeRenouvellement').addEventListener('change', function() {
+    const duree = parseInt(this.value);
+    const dateDebut = document.getElementById('dateDebutRenouvellement').value;
+    
+    if (duree && dateDebut) {
+        const debut = new Date(dateDebut);
+        const dateFin = new Date(debut.getTime() + (duree * 24 * 60 * 60 * 1000));
+        document.getElementById('dateFinRenouvellement').value = dateFin.toISOString().split('T')[0];
+    } else {
+        document.getElementById('dateFinRenouvellement').value = '';
+    }
+});
+
+// Recalcul quand la date de début change
+document.getElementById('dateDebutRenouvellement').addEventListener('change', function() {
+    const dureeSelect = document.getElementById('dureeRenouvellement');
+    if (dureeSelect.value) {
+        dureeSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// Gestion de l'ouverture du modal de renouvellement
+document.getElementById('renouvelerAbonnementModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const idAdherent = button.getAttribute('data-id-adherent');
+    const nomAdherent = button.getAttribute('data-nom-adherent');
+    const emailAdherent = button.getAttribute('data-email-adherent');
+    const profilAdherent = button.getAttribute('data-profil-adherent');
+    const dateFinActuelle = button.getAttribute('data-date-fin-actuelle');
+    
+    console.log('Ouverture modal renouvellement pour adhérent:', idAdherent);
+    
+    // Remplir les informations
+    document.getElementById('idAdherentRenouvellement').value = idAdherent;
+    document.getElementById('nomAdherentRenouvellement').textContent = nomAdherent;
+    document.getElementById('emailAdherentRenouvellement').textContent = emailAdherent;
+    document.getElementById('profilAdherentRenouvellement').textContent = profilAdherent;
+    document.getElementById('dateFinActuelleRenouvellement').textContent = dateFinActuelle;
+    
+    // Définir la date de début par défaut (aujourd'hui)
+    const aujourd = new Date();
+    document.getElementById('dateDebutRenouvellement').value = aujourd.toISOString().split('T')[0];
+    
+    // Calculer la date de fin par défaut (1 an)
+    document.getElementById('dureeRenouvellement').dispatchEvent(new Event('change'));
+    
+    // Réinitialiser le formulaire
+    document.getElementById('formRenouvelerAbonnement').classList.remove('was-validated');
+    document.getElementById('messageRenouvellement').innerHTML = '';
+});
+
+// Gestion du formulaire de renouvellement d'abonnement
+document.getElementById('formRenouvelerAbonnement').addEventListener('submit', function(e) {
+    console.log('=== RENOUVELLEMENT ABONNEMENT SOUMIS ===');
+    e.preventDefault();
+    
+    const btnRenouveler = document.getElementById('btnRenouvelerAbonnement');
+    const messageDiv = document.getElementById('messageRenouvellement');
+    
+    // Validation des champs
+    if (!this.checkValidity()) {
+        console.log('Formulaire renouvellement invalide');
+        e.stopPropagation();
+        this.classList.add('was-validated');
+        return;
+    }
+    
+    // Vérifier que la date de début n'est pas dans le passé
+    const dateDebut = new Date(document.getElementById('dateDebutRenouvellement').value);
+    const aujourd = new Date();
+    aujourd.setHours(0, 0, 0, 0);
+    
+    if (dateDebut < aujourd) {
+        messageDiv.innerHTML = 
+            '<div class="alert alert-warning">' +
+                '<i class="bi bi-exclamation-triangle"></i> ' +
+                'La date de début ne peut pas être dans le passé. ' +
+                'Voulez-vous utiliser la date d\'aujourd\'hui ?' +
+            '</div>';
+        return;
+    }
+    
+    // Désactiver le bouton et afficher le loader
+    btnRenouveler.disabled = true;
+    btnRenouveler.innerHTML = '<i class="bi bi-hourglass-split"></i> Renouvellement en cours...';
+    
+    // Préparer les données
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    
+    console.log('Données renouvellement:', data);
+    
+    const url = '<%= request.getContextPath() %>/admin/renouveler-abonnement';
+    console.log('URL renouvellement:', url);
+    
+    // Envoyer la requête AJAX
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('Response renouvellement status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error('Erreur HTTP ' + response.status);
+        }
+        
+        return response.text();
+    })
+    .then(text => {
+        console.log('Réponse renouvellement brute:', text);
+        
+        try {
+            const responseData = JSON.parse(text);
+            console.log('Réponse renouvellement JSON:', responseData);
+            
+            if (responseData.success) {
+                const messageFormatted = responseData.message.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = 
+                    '<div class="alert alert-success">' +
+                        '<i class="bi bi-check-circle"></i> ' + messageFormatted +
+                    '</div>';
+                
+                // Réinitialiser le formulaire
+                document.getElementById('formRenouvelerAbonnement').reset();
+                document.getElementById('formRenouvelerAbonnement').classList.remove('was-validated');
+                
+                // Fermer le modal après 3 secondes et recharger la page
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('renouvelerAbonnementModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    location.reload();
+                }, 3000);
+            } else {
+                const errorFormatted = responseData.message.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = 
+                    '<div class="alert alert-danger">' +
+                        '<i class="bi bi-exclamation-triangle"></i> ' + errorFormatted +
+                    '</div>';
+            }
+        } catch (e) {
+            console.error('Erreur parsing JSON renouvellement:', e);
+            messageDiv.innerHTML = 
+                '<div class="alert alert-danger">' +
+                    '<i class="bi bi-exclamation-triangle"></i> Réponse invalide du serveur: ' + text +
+                '</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Erreur fetch renouvellement:', error);
+        messageDiv.innerHTML = 
+            '<div class="alert alert-danger">' +
+                '<i class="bi bi-exclamation-triangle"></i> Erreur: ' + error.message +
+            '</div>';
+    })
+    .finally(() => {
+        // Réactiver le bouton
+        btnRenouveler.disabled = false;
+        btnRenouveler.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Renouveler l\'abonnement';
+        console.log('Traitement renouvellement terminé');
+    });
+});
 console.log('=== SCRIPT TERMINÉ ===');
     </script>
 </body>

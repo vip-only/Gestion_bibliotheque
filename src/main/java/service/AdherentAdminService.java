@@ -83,7 +83,7 @@ public class AdherentAdminService {
             System.out.println("Email: " + email);
             System.out.println("Date naissance: " + dateNaissanceStr);
             System.out.println("ID Profil: " + idProfil);
-            System.out.println("Durée abonnement: " + dureeAbonnement);
+            System.out.println("Duree abonnement: " + dureeAbonnement);
             
             if (nom == null || nom.trim().isEmpty()) {
                 throw new Exception("Le nom est requis");
@@ -96,7 +96,7 @@ public class AdherentAdminService {
             }
             
             // if (adherentRepository.existsByEmail(email)) {
-            //     throw new Exception("Un adherent avec cet email existe dejà");
+            //     throw new Exception("Un adherent avec cet email existe deja");
             // }
             
             Profil profil = profilRepository.findById(idProfil)
@@ -129,7 +129,7 @@ public class AdherentAdminService {
             
             adherentAbonnementRepository.save(abonnement);
             
-            // Calculer la durée pour le message
+            // Calculer la duree pour le message
             String dureeTexte = switch (dureeAbonnement) {
                 case 30 -> "1 mois";
                 case 90 -> "3 mois";
@@ -154,6 +154,94 @@ public class AdherentAdminService {
             throw new Exception("Donnees numeriques invalides");
         } catch (Exception e) {
             throw new Exception("Erreur lors de la creation: " + e.getMessage());
+        }
+    }
+    
+    @Transactional
+    public String renouvelerAbonnement(Map<String, Object> renouvellementData) throws Exception {
+        try {
+            System.out.println("=== DEBUT RENOUVELLEMENT ABONNEMENT ===");
+            System.out.println("Donnees reçues: " + renouvellementData);
+            
+            // Extraction des donnees
+            Integer idAdherent = Integer.parseInt(renouvellementData.get("idAdherent").toString());
+            String dateDebutStr = (String) renouvellementData.get("dateDebut");
+            String dateFinStr = (String) renouvellementData.get("dateFin");
+            Integer dureeAbonnement = Integer.parseInt(renouvellementData.get("dureeAbonnement").toString());
+            
+            System.out.println("ID Adherent: " + idAdherent);
+            System.out.println("Date debut: " + dateDebutStr);
+            System.out.println("Date fin: " + dateFinStr);
+            System.out.println("Duree: " + dureeAbonnement + " jours");
+            
+            Adherent adherent = adherentRepository.findById(idAdherent)
+                    .orElseThrow(() -> new Exception("Adherent introuvable"));
+            
+            System.out.println("Adherent trouve: " + adherent.getNom());
+            
+            LocalDate dateDebut = LocalDate.parse(dateDebutStr);
+            LocalDate dateFin = LocalDate.parse(dateFinStr);
+            
+            if (dateDebut.isAfter(dateFin)) {
+                throw new Exception("La date de debut ne peut pas être apres la date de fin");
+            }
+            
+            if (dateDebut.isBefore(LocalDate.now())) {
+                throw new Exception("La date de debut ne peut pas être dans le passe");
+            }
+            
+            // Verifier s'il n'y a pas deja un abonnement actif
+            Integer abonnementActif = adherentAbonnementRepository.isAbonnementActif(idAdherent);
+            if (abonnementActif != null && abonnementActif == 1) {
+                throw new Exception("Cet adherent a deja un abonnement actif. Impossible de renouveler.");
+            }
+            
+            // Creer le nouvel abonnement
+            System.out.println("Creation du nouvel abonnement...");
+            AdherentAbonnement nouvelAbonnement = new AdherentAbonnement();
+            nouvelAbonnement.setAdherent(adherent);
+            nouvelAbonnement.setDateInscription(dateDebut);
+            nouvelAbonnement.setDateFin(dateFin);
+            
+            nouvelAbonnement = adherentAbonnementRepository.save(nouvelAbonnement);
+            System.out.println("Nouvel abonnement cree avec ID: " + nouvelAbonnement.getIdAdherentInscription());
+            
+            // Calculer la duree pour le message
+            String dureeTexte = switch (dureeAbonnement) {
+                case 30 -> "1 mois";
+                case 90 -> "3 mois";
+                case 180 -> "6 mois";
+                case 365 -> "1 an";
+                default -> dureeAbonnement + " jours";
+            };
+            
+            String message = String.format(
+                "Abonnement renouvele avec succes !\n\n" +
+                "Adherent: %s\n" +
+                "Email: %s\n" +
+                "Profil: %s\n" +
+                "Nouvel abonnement: %s\n" +
+                "Date de debut: %s\n" +
+                "Date de fin: %s\n\n" +
+                "L'adherent peut maintenant emprunter a nouveau des livres.",
+                adherent.getNom(),
+                adherent.getEmail(),
+                adherent.getProfil().getLibelle(),
+                dureeTexte,
+                dateDebut,
+                dateFin
+            );
+            
+            System.out.println("=== ABONNEMENT RENOUVELE AVEC SUCCES ===");
+            return message;
+            
+        } catch (NumberFormatException e) {
+            System.err.println("ERREUR NumberFormatException: " + e.getMessage());
+            throw new Exception("Donnees numeriques invalides");
+        } catch (Exception e) {
+            System.err.println("ERREUR lors du renouvellement: " + e.getMessage());
+            e.printStackTrace();
+            throw new Exception("Erreur lors du renouvellement: " + e.getMessage());
         }
     }
 }

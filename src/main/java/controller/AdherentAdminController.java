@@ -84,4 +84,29 @@ public class AdherentAdminController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    @PostMapping("/renouveler-abonnement")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> renouvelerAbonnement(@RequestBody Map<String, Object> renouvellementData, 
+                                                                    HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        
+        // Vérifier que le bibliothécaire est connecté
+        if (session.getAttribute("bibliothecaire") == null) {
+            response.put("success", false);
+            response.put("message", "Session expirée. Veuillez vous reconnecter.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        try {
+            String message = adherentAdminService.renouvelerAbonnement(renouvellementData);
+            response.put("success", true);
+            response.put("message", message);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }
