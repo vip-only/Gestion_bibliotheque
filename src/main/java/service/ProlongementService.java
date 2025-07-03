@@ -49,7 +49,6 @@ public class ProlongementService {
             
             // A faire test réservation
                    
-            // Calculer la duree de prolongement selon le profil et le type de pret
             Integer dureeEmprunt = null;
             try {
                 dureeEmprunt = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(
@@ -61,7 +60,6 @@ public class ProlongementService {
             }
             
             if (dureeEmprunt == null) {
-                // Valeurs par defaut selon le profil
                 Integer idProfil = adherentExemplaire.getAdherent().getProfil().getIdProfil();
                 switch (idProfil) {
                     case 1: dureeEmprunt = 14; break; // Etudiant
@@ -75,7 +73,6 @@ public class ProlongementService {
                 System.out.println("Duree trouvee dans la base: " + dureeEmprunt + " jours");
             }
             
-            // Creer le ProlongementExemplaire
             ProlongementExemplaire prolongementExemplaire = new ProlongementExemplaire();
             prolongementExemplaire.setAdherentExemplaire(adherentExemplaire);
             prolongementExemplaire.setProlongement(dureeEmprunt);
@@ -83,7 +80,6 @@ public class ProlongementService {
             prolongementExemplaire = prolongementExemplaireRepository.save(prolongementExemplaire);
             System.out.println("ProlongementExemplaire cree avec ID: " + prolongementExemplaire.getIdProlongementExemplaire());
             
-            // Recuperer l'etat "en cours" (idEtat = 1)
             Etat etatEnCours = etatRepository.findById(1)
                     .orElseThrow(() -> new Exception("Etat avec ID=1 introuvable"));
             

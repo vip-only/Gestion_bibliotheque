@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <span class="navbar-brand">🏛️ Admin - Gestion des Prolongements</span>
             <div class="navbar-nav ms-auto">
@@ -396,7 +396,6 @@
             }
         });
         
-        // Filtrage automatique pour les selects
         document.getElementById('filterAdherent').addEventListener('change', filtrerProlongements);
         document.getElementById('filterStatut').addEventListener('change', filtrerProlongements);
     </script>
