@@ -33,17 +33,19 @@ public class EmpruntService {
     @Autowired
     private AdherentPenaliteRepository adherentPenaliteRepository;
     
+    @Autowired
+    private ReservationRepository reservationRepository;
+    
     public List<Map<String, Object>> getAllTypesPret() {
         return typePretRepository.findAllTypesPretForSelect();
     }
     
     public void creerEmprunt(String numExemplaire, Integer idAdherent, Integer idTypePret) throws Exception {
-        // Récupérer l'adhérent
         Adherent adherent = adherentRepository.findById(idAdherent)
-            .orElseThrow(() -> new Exception("Adhérent introuvable"));
+            .orElseThrow(() -> new Exception("Adherent introuvable"));
         
         if (adherentPenaliteRepository.hasPenaliteActive(idAdherent)) {
-            throw new Exception("Impossible d'emprunter : vous avez une pénalité active");
+            throw new Exception("Impossible d'emprunter : vous avez une penalite active");
         }
         
         if (idTypePret == 1) { 
@@ -63,21 +65,24 @@ public class EmpruntService {
             throw new Exception("Exemplaire introuvable");
         }
         
-        // Vérifier l'âge requis pour le livre
+        // Verifier l'âge requis pour le livre
         if (exemplaire.getLivre().getAgesup() != null) {
             int ageAdherent = calculerAge(adherent.getDateNaissance());
             if (ageAdherent < exemplaire.getLivre().getAgesup()) {
                 throw new Exception("Âge minimum requis pour ce livre : " + exemplaire.getLivre().getAgesup() + " ans. " +
-                                  "Âge de l'adhérent : " + ageAdherent + " ans.");
+                                  "Âge de l'adherent : " + ageAdherent + " ans.");
             }
         }
        
         if (adherentExemplaireRepository.existsByExemplaireAndDateRetourIsNull(exemplaire)) {
-            throw new Exception("Cet exemplaire est déjà emprunté");
+            throw new Exception("Cet exemplaire est dejà emprunte");
         }
         
+        // Verifier s'il y a une reservation acceptee par un autre adherent
+        verifierReservationAcceptee(exemplaire, idAdherent);
+        
         TypePret typePret = typePretRepository.findById(idTypePret)
-            .orElseThrow(() -> new Exception("Type de prêt introuvable"));
+            .orElseThrow(() -> new Exception("Type de pret introuvable"));
         
         LocalDate dateEmprunt = LocalDate.now();
         LocalDate dateLimite = calculerDateLimite(adherent.getProfil().getIdProfil(), idTypePret, dateEmprunt);
@@ -96,6 +101,40 @@ public class EmpruntService {
         adherentExemplaireRepository.save(emprunt);
     }
     
+    private void verifierReservationAcceptee(Exemplaire exemplaire, Integer idAdherentDemandeur) throws Exception {
+        Map<String, Object> reservationProche = reservationRepository.findReservationAccepteeProche(
+            exemplaire.getIdExemplaire(), 
+            idAdherentDemandeur
+        );
+        
+        if (reservationProche != null) {
+            String nomAdherentReservation = (String) reservationProche.get("nomAdherent");
+            String emailAdherentReservation = (String) reservationProche.get("emailAdherent");
+            LocalDate dateDebut = (LocalDate) reservationProche.get("dateDebut");
+            LocalDate dateFin = (LocalDate) reservationProche.get("dateFin");
+            
+            throw new Exception(String.format(
+                "EXEMPLAIRE RESERVE : Cet exemplaire est reserve par un autre adherent.\n\n" +
+                " DeTAILS DE LA ReSERVATION :\n" +
+                " Adherent : %s (%s)\n" +
+                " Periode de recuperation : du %s au %s\n" +
+                " Exemplaire : %s\n" +
+                " Livre : %s\n\n" +
+                " SOLUTIONS :\n" +
+                " Choisissez un autre exemplaire du meme livre\n" +
+                " Attendez que la reservation expire (après le %s)\n" +
+                " Verifiez la disponibilite d'autres livres similaires",
+                nomAdherentReservation,
+                emailAdherentReservation,
+                dateDebut,
+                dateFin,
+                exemplaire.getNumExemplaire(),
+                exemplaire.getLivre().getTitre(),
+                dateFin
+            ));
+        }
+    }
+    
     private int calculerAge(LocalDate dateNaissance) {
         if (dateNaissance == null) {
             return 0; 
@@ -104,15 +143,12 @@ public class EmpruntService {
     }
     
     private LocalDate calculerDateLimite(Integer idProfil, Integer idTypePret, LocalDate dateEmprunt) {
-        // Pour les prêts "sur place" (idTypePret = 2), la date limite est le même jour
         if (idTypePret == 2) {
-            return dateEmprunt; // Date limite = date d'emprunt (même jour)
+            return dateEmprunt; // Date limite = date d'emprunt (meme jour)
         }
-        
-        // Pour les autres types de prêt, utiliser la durée configurée
         Integer nbJours = dureeEmpruntRepository.findNbJoursByProfilAndTypePret(idProfil, idTypePret);
         if (nbJours == null) {
-            nbJours = 14; // valeur par défaut
+            nbJours = 14; // valeur par defaut
         }
         return dateEmprunt.plusDays(nbJours);
     }

@@ -7,13 +7,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <span class="navbar-brand">🏛️ Admin - Bibliothèque</span>
+            <span class="navbar-brand">🏛️ Admin - Dashboard</span>
             <div class="navbar-nav ms-auto">
+                <a href="<%= request.getContextPath() %>/admin/dashboard" class="btn btn-outline-light btn-sm me-2">📚 Emprunts</a>
                 <a href="<%= request.getContextPath() %>/admin/reservations" class="btn btn-outline-light btn-sm me-2">📋 Réservations</a>
                 <a href="<%= request.getContextPath() %>/admin/prolongements" class="btn btn-outline-light btn-sm me-2">⏱️ Prolongements</a>
                 <a href="<%= request.getContextPath() %>/admin/retours" class="btn btn-outline-light btn-sm me-2">🔄 Retours</a>
+                <a href="<%= request.getContextPath() %>/admin/adherents" class="btn btn-outline-light btn-sm me-2">👥 Adhérents</a>
                 <span class="navbar-text me-3">Bonjour, ${bibliothecaire.nom}</span>
                 <a href="<%= request.getContextPath() %>/auth/logoutAdmin" class="btn btn-outline-light btn-sm">Déconnexion</a>
             </div>
@@ -36,20 +38,71 @@
             </div>
         <% } %>
         
+        <!-- Ajouter après les messages d'alerte et avant la card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="rechercheInput" 
+                                           placeholder="🔍 Rechercher par titre, auteur, genre, édition ou maison d'édition..."
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-secondary" type="button" id="btnEffacerRecherche">
+                                        <i class="bi bi-x-circle"></i> Effacer
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Tapez au moins 2 caractères pour commencer la recherche
+                                </small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div id="resultatsRecherche" class="text-muted">
+                                    <span id="nombreResultats">Tous les livres affichés</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">📚 Exemplaires Disponibles par Livre</h5>
-                        <small class="text-muted">Système de vérification des quotas et pénalités activé</small>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">📚 Exemplaires Disponibles par Livre</h5>
+                            <small class="text-muted">Système de vérification des quotas et pénalités activé</small>
+                        </div>
+                        <div>
+                            <!-- Indicateur de filtrage -->
+                            <span id="indicateurFiltre" class="badge bg-info d-none">
+                                <i class="bi bi-funnel"></i> Filtré
+                            </span>
+                        </div>
                     </div>
                     <div class="card-body">
+                        <!-- Message quand aucun résultat -->
+                        <div id="aucunResultat" class="alert alert-warning d-none" role="alert">
+                            <i class="bi bi-search"></i> 
+                            <strong>Aucun livre trouvé</strong> pour votre recherche "<span id="termeRecherche"></span>".
+                            <br>
+                            <small>Essayez avec d'autres mots-clés ou <button type="button" class="btn btn-link p-0" onclick="effacerRecherche()">effacez la recherche</button>.</small>
+                        </div>
+                        
                         <% 
                         List<Map<String, Object>> exemplaires = (List<Map<String, Object>>) request.getAttribute("exemplairesDisponibles");
                         if (exemplaires != null && !exemplaires.isEmpty()) {
                         %>
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table class="table table-striped table-hover" id="tableLivres">
                                 <thead class="table-primary">
                                     <tr>
                                         <th>Titre</th>
@@ -62,19 +115,24 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="tbodyLivres">
                                     <% for (Map<String, Object> livre : exemplaires) { %>
-                                    <tr>
+                                    <tr class="livre-row" 
+                                        data-titre="<%= livre.get("titre") != null ? livre.get("titre").toString().toLowerCase() : "" %>"
+                                        data-auteur="<%= livre.get("auteur") != null ? livre.get("auteur").toString().toLowerCase() : "" %>"
+                                        data-genre="<%= livre.get("genre") != null ? livre.get("genre").toString().toLowerCase() : "" %>"
+                                        data-edition="<%= livre.get("edition") != null ? livre.get("edition").toString().toLowerCase() : "" %>"
+                                        data-maison="<%= livre.get("maisonEdition") != null ? livre.get("maisonEdition").toString().toLowerCase() : "" %>">
                                         <td>
-                                            <strong><%= livre.get("titre") != null ? livre.get("titre") : "N/A" %></strong>
+                                            <strong class="livre-titre"><%= livre.get("titre") != null ? livre.get("titre") : "N/A" %></strong>
                                             <% if (livre.get("ageMinimum") != null) { %>
                                                 <br><small class="text-warning">⚠️ Âge min: <%= livre.get("ageMinimum") %> ans</small>
                                             <% } %>
                                         </td>
-                                        <td><%= livre.get("auteur") != null ? livre.get("auteur") : "N/A" %></td>
-                                        <td><%= livre.get("genre") != null ? livre.get("genre") : "N/A" %></td>
-                                        <td><%= livre.get("edition") != null ? livre.get("edition") : "N/A" %></td>
-                                        <td><%= livre.get("maisonEdition") != null ? livre.get("maisonEdition") : "N/A" %></td>
+                                        <td class="livre-auteur"><%= livre.get("auteur") != null ? livre.get("auteur") : "N/A" %></td>
+                                        <td class="livre-genre"><%= livre.get("genre") != null ? livre.get("genre") : "N/A" %></td>
+                                        <td class="livre-edition"><%= livre.get("edition") != null ? livre.get("edition") : "N/A" %></td>
+                                        <td class="livre-maison"><%= livre.get("maisonEdition") != null ? livre.get("maisonEdition") : "N/A" %></td>
                                         <td><span class="badge bg-success"><%= livre.get("nombreExemplaires") %></span></td>
                                         <td><small class="text-muted"><%= livre.get("listeExemplaires") != null ? livre.get("listeExemplaires") : "N/A" %></small></td>
                                         <td>
@@ -209,6 +267,137 @@
                     option.textContent = exemplaire.trim();
                     selectExemplaire.appendChild(option);
                 });
+            }
+        });
+        
+        // Système de filtrage par mots-clés
+        const rechercheInput = document.getElementById('rechercheInput');
+        const btnEffacer = document.getElementById('btnEffacerRecherche');
+        const tableLivres = document.getElementById('tableLivres');
+        const tbodyLivres = document.getElementById('tbodyLivres');
+        const aucunResultat = document.getElementById('aucunResultat');
+        const termeRecherche = document.getElementById('termeRecherche');
+        const nombreResultats = document.getElementById('nombreResultats');
+        const indicateurFiltre = document.getElementById('indicateurFiltre');
+        
+        // Variables pour le debouncing
+        let timeoutId;
+        const DELAI_RECHERCHE = 300; // milliseconds
+        
+        // Fonction de filtrage
+        function filtrerLivres(terme) {
+            if (!tbodyLivres) return;
+            
+            const lignes = tbodyLivres.querySelectorAll('.livre-row');
+            let compteurVisible = 0;
+            
+            // Si le terme est vide ou trop court
+            if (terme.length < 2) {
+                lignes.forEach(ligne => {
+                    ligne.style.display = '';
+                    compteurVisible++;
+                });
+                
+                // Masquer le message "aucun résultat"
+                if (aucunResultat) aucunResultat.classList.add('d-none');
+                if (tableLivres) tableLivres.style.display = '';
+                
+                // Mise à jour des indicateurs
+                if (nombreResultats) nombreResultats.textContent = 'Tous les livres affichés';
+                if (indicateurFiltre) indicateurFiltre.classList.add('d-none');
+                
+                return;
+            }
+            
+            const termeNormalise = terme.toLowerCase().trim();
+            
+            lignes.forEach(ligne => {
+                const titre = ligne.getAttribute('data-titre') || '';
+                const auteur = ligne.getAttribute('data-auteur') || '';
+                const genre = ligne.getAttribute('data-genre') || '';
+                const edition = ligne.getAttribute('data-edition') || '';
+                const maison = ligne.getAttribute('data-maison') || '';
+                
+                // Recherche dans tous les champs
+                const contientTerme = titre.includes(termeNormalise) ||
+                                     auteur.includes(termeNormalise) ||
+                                     genre.includes(termeNormalise) ||
+                                     edition.includes(termeNormalise) ||
+                                     maison.includes(termeNormalise);
+                
+                if (contientTerme) {
+                    ligne.style.display = '';
+                    compteurVisible++;
+                } else {
+                    ligne.style.display = 'none';
+                }
+            });
+            
+            // Gestion de l'affichage des résultats
+            if (compteurVisible === 0) {
+                // Aucun résultat trouvé
+                if (tableLivres) tableLivres.style.display = 'none';
+                if (aucunResultat) {
+                    aucunResultat.classList.remove('d-none');
+                    if (termeRecherche) termeRecherche.textContent = terme;
+                }
+                if (nombreResultats) nombreResultats.textContent = 'Aucun résultat';
+            } else {
+                // Résultats trouvés
+                if (tableLivres) tableLivres.style.display = '';
+                if (aucunResultat) aucunResultat.classList.add('d-none');
+                if (nombreResultats) {
+                    nombreResultats.textContent = `${compteurVisible} livre${compteurVisible > 1 ? 's' : ''} trouvé${compteurVisible > 1 ? 's' : ''}`;
+                }
+            }
+            
+            // Afficher l'indicateur de filtrage
+            if (indicateurFiltre) indicateurFiltre.classList.remove('d-none');
+        }
+        
+        // Fonction pour effacer la recherche
+        function effacerRecherche() {
+            if (rechercheInput) rechercheInput.value = '';
+            filtrerLivres('');
+        }
+        
+        // Écouteur d'événement pour la saisie (avec debouncing)
+        if (rechercheInput) {
+            rechercheInput.addEventListener('input', function(e) {
+                const terme = e.target.value;
+                
+                // Annuler le timeout précédent
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+                
+                // Définir un nouveau timeout
+                timeoutId = setTimeout(() => {
+                    filtrerLivres(terme);
+                }, DELAI_RECHERCHE);
+            });
+            
+            // Recherche en temps réel pour les caractères spéciaux
+            rechercheInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    effacerRecherche();
+                }
+            });
+        }
+        
+        // Écouteur pour le bouton effacer
+        if (btnEffacer) {
+            btnEffacer.addEventListener('click', effacerRecherche);
+        }
+        
+        // Fonction globale pour le lien dans le message "aucun résultat"
+        window.effacerRecherche = effacerRecherche;
+        
+        // Initialisation : s'assurer que tous les livres sont visibles au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            if (nombreResultats) {
+                const totalLivres = document.querySelectorAll('.livre-row').length;
+                nombreResultats.textContent = `${totalLivres} livre${totalLivres > 1 ? 's' : ''} disponible${totalLivres > 1 ? 's' : ''}`;
             }
         });
     </script>

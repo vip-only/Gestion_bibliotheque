@@ -66,12 +66,12 @@ public interface ProlongementExemplaireRepository extends JpaRepository<Prolonge
         """, nativeQuery = true)
     List<Map<String, Object>> findProlongementsEnCours();
     
-    // @Query(value = """
-    //     SELECT COUNT(*)
-    //     FROM ProlongementExemplaire pe 
-    //     INNER JOIN EtatProlongementExemplaire epe ON pe.idAdherentExemplaire = epe.idProlongementExemplaire
-    //     WHERE pe.idAdherentExemplaire = :idAdherentExemplaire 
-    //     AND epe.idEtat = 1
-    //     """, nativeQuery = true)
-    // Integer countByAdherentExemplaireAndEtatEnCours(@Param("idAdherentExemplaire") Integer idAdherentExemplaire);
+    @Query(value = """
+        SELECT COUNT(*)
+        FROM ProlongementExemplaire pe 
+        INNER JOIN EtatProlongementExemplaire epe ON pe.idAdherentExemplaire = epe.idProlongementExemplaire
+        WHERE pe.idAdherentExemplaire = :idAdherentExemplaire 
+        AND epe.idEtat = 1
+        """, nativeQuery = true)
+    Integer countByAdherentExemplaireAndEtatEnCours(@Param("idAdherentExemplaire") Integer idAdherentExemplaire);
 }
