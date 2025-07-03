@@ -33,13 +33,11 @@ public class ProlongementService {
             System.out.println("idAdherentExemplaire: " + idAdherentExemplaire);
             System.out.println("idAdherent: " + idAdherent);
             
-            // Recuperer l'emprunt
             AdherentExemplaire adherentExemplaire = adherentExemplaireRepository.findById(idAdherentExemplaire)
                     .orElseThrow(() -> new Exception("Emprunt introuvable"));
             
             System.out.println("Emprunt trouve: " + adherentExemplaire.getIdAdherentExemplaire());
             
-            // Verifier que l'emprunt appartient a l'adherent connecte
             if (!adherentExemplaire.getAdherent().getIdAdherent().equals(idAdherent)) {
                 throw new Exception("Vous n'etes pas autorise a prolonger cet emprunt");
             }
@@ -49,14 +47,8 @@ public class ProlongementService {
                 throw new Exception("Impossible de prolonger un emprunt deja retourne");
             }
             
-            // Verifier qu'il n'y a pas deja une demande de prolongement en cours
-            Integer countDemandesEnCours = prolongementExemplaireRepository.countByAdherentExemplaireAndEtatEnCours(idAdherentExemplaire);
-            if (countDemandesEnCours != null && countDemandesEnCours > 0) {
-                throw new Exception("Une demande de prolongement est déjà en cours pour cet emprunt");
-            }
-            
-            System.out.println("Aucune demande en cours trouvée, création du prolongement...");
-            
+            // A faire test réservation
+                   
             // Calculer la duree de prolongement selon le profil et le type de pret
             Integer dureeEmprunt = null;
             try {
