@@ -3,17 +3,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestion des Retours - Bibliothèque</title>
+    <title>Gestion des Réservations - Bibliothèque</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <span class="navbar-brand">🏛️ Admin - Gestion des Retours</span>
+            <span class="navbar-brand">🏛️ Admin - Gestion des Réservations</span>
             <div class="navbar-nav ms-auto">
-                <a href="<%= request.getContextPath() %>/admin/reservations" class="btn btn-outline-light btn-sm me-2">📋 Réservations</a>
                 <a href="<%= request.getContextPath() %>/admin/dashboard" class="btn btn-outline-light btn-sm me-2">📚 Emprunts</a>
+                <a href="<%= request.getContextPath() %>/admin/retours" class="btn btn-outline-light btn-sm me-2">🔄 Retours</a>
                 <span class="navbar-text me-3">Bonjour, ${bibliothecaire.nom}</span>
                 <a href="<%= request.getContextPath() %>/auth/logoutAdmin" class="btn btn-outline-light btn-sm">Déconnexion</a>
             </div>
@@ -71,15 +71,15 @@
                                 <label for="filterStatut" class="form-label">Filtrer par statut:</label>
                                 <select class="form-select" id="filterStatut">
                                     <option value="">Tous les statuts</option>
-                                    <option value="En retard">En retard</option>
-                                    <option value="Bientôt échéance">Bientôt échéance</option>
-                                    <option value="Normal">Normal</option>
+                                    <option value="En retard de récupération">En retard de récupération</option>
+                                    <option value="À récupérer bientôt">À récupérer bientôt</option>
+                                    <option value="En attente">En attente</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-12">
-                                <button type="button" class="btn btn-primary" onclick="filtrerEmprunts()">
+                                <button type="button" class="btn btn-primary" onclick="filtrerReservations()">
                                     <i class="bi bi-search"></i> Filtrer
                                 </button>
                                 <button type="button" class="btn btn-secondary" onclick="resetFiltres()">
@@ -92,21 +92,21 @@
             </div>
         </div>
         
-        <!-- Liste des emprunts en cours -->
+        <!-- Liste des réservations en cours -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">📖 Emprunts en cours</h5>
-                        <small class="text-muted">Livres à retourner</small>
+                        <h5 class="card-title mb-0">📋 Réservations en cours</h5>
+                        <small class="text-muted">Livres réservés en attente de récupération</small>
                     </div>
                     <div class="card-body">
                         <% 
-                        List<Map<String, Object>> emprunts = (List<Map<String, Object>>) request.getAttribute("empruntsEnCours");
-                        if (emprunts != null && !emprunts.isEmpty()) {
+                        List<Map<String, Object>> reservations = (List<Map<String, Object>>) request.getAttribute("reservationsEnCours");
+                        if (reservations != null && !reservations.isEmpty()) {
                         %>
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="tableEmprunts">
+                            <table class="table table-striped table-hover" id="tableReservations">
                                 <thead class="table-primary">
                                     <tr>
                                         <th>Adhérent</th>
@@ -114,25 +114,29 @@
                                         <th>Exemplaire</th>
                                         <th>Livre</th>
                                         <th>Auteur</th>
-                                        <th>Type prêt</th>
-                                        <th>Date emprunt</th>
-                                        <th>Date limite</th>
+                                        <th>Date réservation</th>
+                                        <th>Date récupération</th>
+                                        <th>Date limite retour</th>
                                         <th>Retard (jours)</th>
                                         <th>Statut</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <% for (Map<String, Object> emprunt : emprunts) { 
-                                        String statut = (String) emprunt.get("statut");
+                                    <% for (Map<String, Object> reservation : reservations) { 
+                                        String statut = (String) reservation.get("statut");
                                         String badgeClass = "bg-success";
-                                        if ("En retard".equals(statut)) {
+                                        String rowClass = "";
+                                        
+                                        if ("En retard de récupération".equals(statut)) {
                                             badgeClass = "bg-danger";
-                                        } else if ("Bientôt échéance".equals(statut)) {
+                                            rowClass = "table-danger";
+                                        } else if ("À récupérer bientôt".equals(statut)) {
                                             badgeClass = "bg-warning";
+                                            rowClass = "table-warning";
                                         }
                                         
-                                        Object joursRetardObj = emprunt.get("joursRetard");
+                                        Object joursRetardObj = reservation.get("joursRetard");
                                         Integer joursRetard = 0;
                                         if (joursRetardObj != null) {
                                             if (joursRetardObj instanceof Number) {
@@ -140,25 +144,26 @@
                                             }
                                         }
                                     %>
-                                    <tr data-adherent="<%= emprunt.get("nomAdherent") %>" 
-                                        data-exemplaire="<%= emprunt.get("numExemplaire") %>" 
+                                    <tr class="<%= rowClass %>" 
+                                        data-adherent="<%= reservation.get("nomAdherent") %>" 
+                                        data-exemplaire="<%= reservation.get("numExemplaire") %>" 
                                         data-statut="<%= statut %>">
                                         <td>
-                                            <strong><%= emprunt.get("nomAdherent") %></strong><br>
-                                            <small class="text-muted"><%= emprunt.get("emailAdherent") %></small>
+                                            <strong><%= reservation.get("nomAdherent") %></strong><br>
+                                            <small class="text-muted"><%= reservation.get("emailAdherent") %></small>
                                         </td>
-                                        <td><%= emprunt.get("profilAdherent") %></td>
-                                        <td><code><%= emprunt.get("numExemplaire") %></code></td>
+                                        <td><%= reservation.get("profilAdherent") %></td>
+                                        <td><code><%= reservation.get("numExemplaire") %></code></td>
                                         <td>
-                                            <strong><%= emprunt.get("titreLivre") %></strong>
-                                            <% if (emprunt.get("edition") != null) { %>
-                                                <br><small class="text-muted"><%= emprunt.get("edition") %></small>
+                                            <strong><%= reservation.get("titreLivre") %></strong>
+                                            <% if (reservation.get("edition") != null) { %>
+                                                <br><small class="text-muted"><%= reservation.get("edition") %></small>
                                             <% } %>
                                         </td>
-                                        <td><%= emprunt.get("auteur") != null ? emprunt.get("auteur") : "N/A" %></td>
-                                        <td><%= emprunt.get("typePret") %></td>
-                                        <td><%= emprunt.get("dateEmprunt") %></td>
-                                        <td><%= emprunt.get("dateLimite") %></td>
+                                        <td><%= reservation.get("auteur") != null ? reservation.get("auteur") : "N/A" %></td>
+                                        <td><%= reservation.get("dateEtat") %></td>
+                                        <td><%= reservation.get("dateDebut") %></td>
+                                        <td><%= reservation.get("dateFin") %></td>
                                         <td>
                                             <% if (joursRetard > 0) { %>
                                                 <span class="badge bg-danger">+<%= joursRetard %></span>
@@ -174,13 +179,22 @@
                                         <td>
                                             <button type="button" class="btn btn-success btn-sm" 
                                                     data-bs-toggle="modal" 
-                                                    data-bs-target="#retourModal"
-                                                    data-emprunt-id="<%= emprunt.get("idAdherentExemplaire") %>"
-                                                    data-adherent="<%= emprunt.get("nomAdherent") %>"
-                                                    data-livre="<%= emprunt.get("titreLivre") %>"
-                                                    data-exemplaire="<%= emprunt.get("numExemplaire") %>"
-                                                    data-retard="<%= joursRetard %>">
-                                                <i class="bi bi-check-circle"></i> Retourner
+                                                    data-bs-target="#confirmerReservationModal"
+                                                    data-reservation-id="<%= reservation.get("idReservation") %>"
+                                                    data-adherent="<%= reservation.get("nomAdherent") %>"
+                                                    data-livre="<%= reservation.get("titreLivre") %>"
+                                                    data-exemplaire="<%= reservation.get("numExemplaire") %>"
+                                                    title="Confirmer la récupération">
+                                                <i class="bi bi-check-circle"></i> Récupéré
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#annulerReservationModal"
+                                                    data-reservation-id="<%= reservation.get("idReservation") %>"
+                                                    data-adherent="<%= reservation.get("nomAdherent") %>"
+                                                    data-livre="<%= reservation.get("titreLivre") %>"
+                                                    title="Annuler la réservation">
+                                                <i class="bi bi-x-circle"></i> Annuler
                                             </button>
                                         </td>
                                     </tr>
@@ -190,7 +204,7 @@
                         </div>
                         <% } else { %>
                         <div class="alert alert-info" role="alert">
-                            <i class="bi bi-info-circle"></i> Aucun emprunt en cours.
+                            <i class="bi bi-info-circle"></i> Aucune réservation en cours.
                         </div>
                         <% } %>
                     </div>
@@ -199,42 +213,73 @@
         </div>
     </div>
     
-    <!-- Modal de confirmation de retour -->
-    <div class="modal fade" id="retourModal" tabindex="-1" aria-labelledby="retourModalLabel" aria-hidden="true">
+    <!-- Modal de confirmation de récupération -->
+    <div class="modal fade" id="confirmerReservationModal" tabindex="-1" aria-labelledby="confirmerReservationModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="retourModalLabel">📖 Confirmer le retour</h5>
+                    <h5 class="modal-title" id="confirmerReservationModalLabel">📖 Confirmer la récupération</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="<%= request.getContextPath() %>/admin/retourner" method="post">
+                <form action="<%= request.getContextPath() %>/admin/confirmer-reservation" method="post">
                     <div class="modal-body">
-                        <input type="hidden" id="idAdherentExemplaire" name="idAdherentExemplaire">
+                        <input type="hidden" id="idReservationConfirmer" name="idReservation">
                         
                         <div class="mb-3">
-                            <h6>Informations de l'emprunt :</h6>
+                            <h6>Informations de la réservation :</h6>
                             <ul class="list-unstyled">
-                                <li><strong>Adhérent :</strong> <span id="modalAdherent"></span></li>
-                                <li><strong>Livre :</strong> <span id="modalLivre"></span></li>
-                                <li><strong>Exemplaire :</strong> <span id="modalExemplaire"></span></li>
-                                <li><strong>Retard :</strong> <span id="modalRetard"></span></li>
+                                <li><strong>Adhérent :</strong> <span id="modalAdherentConfirmer"></span></li>
+                                <li><strong>Livre :</strong> <span id="modalLivreConfirmer"></span></li>
+                                <li><strong>Exemplaire :</strong> <span id="modalExemplaireConfirmer"></span></li>
                             </ul>
-                        </div>
-                        
-                        <div id="alerteRetard" class="alert alert-warning" style="display: none;">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Attention :</strong> Ce retour est en retard. Une pénalité sera automatiquement appliquée.
                         </div>
                         
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
-                            La date de retour sera ajustée automatiquement si aujourd'hui est un jour férié.
+                            Cette action va transformer la réservation en emprunt actif.
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                         <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check-circle"></i> Confirmer le retour
+                            <i class="bi bi-check-circle"></i> Confirmer la récupération
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal d'annulation de réservation -->
+    <div class="modal fade" id="annulerReservationModal" tabindex="-1" aria-labelledby="annulerReservationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="annulerReservationModalLabel">❌ Annuler la réservation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="<%= request.getContextPath() %>/admin/annuler-reservation" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="idReservationAnnuler" name="idReservation">
+                        
+                        <div class="mb-3">
+                            <h6>Informations de la réservation :</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Adhérent :</strong> <span id="modalAdherentAnnuler"></span></li>
+                                <li><strong>Livre :</strong> <span id="modalLivreAnnuler"></span></li>
+                                <li><strong>Exemplaire :</strong> <span id="modalExemplaireAnnuler"></span></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Attention :</strong> Cette action va annuler définitivement la réservation.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Retour</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Confirmer l'annulation
                         </button>
                     </div>
                 </form>
@@ -244,42 +289,41 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Gestion du modal de retour
-        document.getElementById('retourModal').addEventListener('show.bs.modal', function (event) {
+        // Gestion du modal de confirmation
+        document.getElementById('confirmerReservationModal').addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
-            var empruntId = button.getAttribute('data-emprunt-id');
+            var reservationId = button.getAttribute('data-reservation-id');
             var adherent = button.getAttribute('data-adherent');
             var livre = button.getAttribute('data-livre');
             var exemplaire = button.getAttribute('data-exemplaire');
-            var retard = parseInt(button.getAttribute('data-retard'));
             
-            document.getElementById('idAdherentExemplaire').value = empruntId;
-            document.getElementById('modalAdherent').textContent = adherent;
-            document.getElementById('modalLivre').textContent = livre;
-            document.getElementById('modalExemplaire').textContent = exemplaire;
+            document.getElementById('idReservationConfirmer').value = reservationId;
+            document.getElementById('modalAdherentConfirmer').textContent = adherent;
+            document.getElementById('modalLivreConfirmer').textContent = livre;
+            document.getElementById('modalExemplaireConfirmer').textContent = exemplaire;
+        });
+        
+        // Gestion du modal d'annulation
+        document.getElementById('annulerReservationModal').addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var reservationId = button.getAttribute('data-reservation-id');
+            var adherent = button.getAttribute('data-adherent');
+            var livre = button.getAttribute('data-livre');
+            var exemplaire = button.getAttribute('data-exemplaire');
             
-            var modalRetard = document.getElementById('modalRetard');
-            var alerteRetard = document.getElementById('alerteRetard');
-            
-            if (retard > 0) {
-                modalRetard.innerHTML = '<span class="badge bg-danger">+' + retard + ' jour(s)</span>';
-                alerteRetard.style.display = 'block';
-            } else if (retard < 0) {
-                modalRetard.innerHTML = '<span class="badge bg-success">' + retard + ' jour(s)</span>';
-                alerteRetard.style.display = 'none';
-            } else {
-                modalRetard.innerHTML = '<span class="badge bg-success">Aucun retard</span>';
-                alerteRetard.style.display = 'none';
-            }
+            document.getElementById('idReservationAnnuler').value = reservationId;
+            document.getElementById('modalAdherentAnnuler').textContent = adherent;
+            document.getElementById('modalLivreAnnuler').textContent = livre;
+            document.getElementById('modalExemplaireAnnuler').textContent = exemplaire;
         });
         
         // Fonctions de filtrage
-        function filtrerEmprunts() {
+        function filtrerReservations() {
             var filterAdherent = document.getElementById('filterAdherent').value.toLowerCase();
             var filterExemplaire = document.getElementById('filterExemplaire').value.toLowerCase();
             var filterStatut = document.getElementById('filterStatut').value;
             
-            var table = document.getElementById('tableEmprunts');
+            var table = document.getElementById('tableReservations');
             var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
             
             for (var i = 0; i < rows.length; i++) {
@@ -311,7 +355,7 @@
             document.getElementById('filterExemplaire').value = '';
             document.getElementById('filterStatut').value = '';
             
-            var table = document.getElementById('tableEmprunts');
+            var table = document.getElementById('tableReservations');
             var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
             
             for (var i = 0; i < rows.length; i++) {
@@ -322,15 +366,15 @@
         // Filtrage en temps réel pour l'exemplaire
         document.getElementById('filterExemplaire').addEventListener('input', function() {
             if (this.value.length > 2) {
-                filtrerEmprunts();
+                filtrerReservations();
             } else if (this.value.length === 0) {
                 resetFiltres();
             }
         });
         
         // Filtrage automatique pour les selects
-        document.getElementById('filterAdherent').addEventListener('change', filtrerEmprunts);
-        document.getElementById('filterStatut').addEventListener('change', filtrerEmprunts);
+        document.getElementById('filterAdherent').addEventListener('change', filtrerReservations);
+        document.getElementById('filterStatut').addEventListener('change', filtrerReservations);
     </script>
 </body>
 </html>
