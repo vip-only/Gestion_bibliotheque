@@ -115,4 +115,78 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
         ORDER BY r.dateDebut ASC
         """, nativeQuery = true)
     List<Map<String, Object>> findReservationsEnCours();
+
+    @Query(value = """
+        SELECT 
+            r.idReservation,
+            r.dateDebut,
+            r.dateFin,
+            a.nom as nomAdherent,
+            a.email as emailAdherent,
+            a.idAdherent
+        FROM Reservation r
+        INNER JOIN (
+            SELECT 
+                re1.idReservation,
+                re1.idEtat,
+                re1.dateEtat
+            FROM ReservationEtat re1
+            INNER JOIN (
+                SELECT 
+                    idReservation,
+                    MAX(dateEtat) as maxDateEtat
+                FROM ReservationEtat
+                GROUP BY idReservation
+            ) re_max ON re1.idReservation = re_max.idReservation 
+                     AND re1.dateEtat = re_max.maxDateEtat
+            WHERE re1.idEtat = 2
+        ) re_recent ON r.idReservation = re_recent.idReservation
+        INNER JOIN Adherent a ON r.idAdherent = a.idAdherent
+        WHERE r.idExemplaire = :idExemplaire
+        AND r.idAdherent != :idAdherentDemandeur
+        AND CURDATE() < r.dateDebut
+        ORDER BY r.dateDebut ASC
+        LIMIT 1
+        """, nativeQuery = true)
+    Map<String, Object> findReservationAccepteeProche(@Param("idExemplaire") Integer idExemplaire,
+                                                       @Param("idAdherentDemandeur") Integer idAdherentDemandeur);
+
+// ...existing code...
+    /**
+     * Trouve une réservation acceptée qui entrerait en conflit avec une nouvelle date limite
+     * (si la nouvelle date limite empiète sur la date de début de la réservation)
+     */
+    @Query(value = """
+        SELECT 
+            r.idReservation,
+            r.dateDebut,
+            r.dateFin,
+            a.nom as nomAdherent,
+            a.email as emailAdherent
+        FROM Reservation r
+        INNER JOIN (
+            SELECT 
+                re1.idReservation,
+                re1.idEtat,
+                re1.dateEtat
+            FROM ReservationEtat re1
+            INNER JOIN (
+                SELECT 
+                    idReservation,
+                    MAX(dateEtat) as maxDateEtat
+                FROM ReservationEtat
+                GROUP BY idReservation
+            ) re_max ON re1.idReservation = re_max.idReservation 
+                     AND re1.dateEtat = re_max.maxDateEtat
+            WHERE re1.idEtat = 2
+        ) re_recent ON r.idReservation = re_recent.idReservation
+        INNER JOIN Adherent a ON r.idAdherent = a.idAdherent
+        WHERE r.idExemplaire = :idExemplaire
+        AND :nouvelleDateLimite >= r.dateDebut
+        ORDER BY r.dateDebut ASC
+        LIMIT 1
+        """, nativeQuery = true)
+    Map<String, Object> findReservationAccepteeConflictuelle(@Param("idExemplaire") Integer idExemplaire,
+                                                              @Param("nouvelleDateLimite") LocalDate nouvelleDateLimite);
+
 }
