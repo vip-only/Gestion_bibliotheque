@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import model.Bibliothecaire;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @Controller
 @RequestMapping("/admin")
@@ -79,16 +80,19 @@ public class PretController {
     
     @PostMapping("/retourner")
     public String retournerLivre(@RequestParam Integer idAdherentExemplaire,
-                                HttpSession session,
-                                Model model) {
-        
+                           @RequestParam String dateRetour,
+                           HttpSession session,
+                           Model model) {
+    
         Bibliothecaire bibliothecaire = (Bibliothecaire) session.getAttribute("bibliothecaire");
         if (bibliothecaire == null) {
             return "redirect:/auth/authAdmin";
         }
         
         try {
-            String message = retourService.retournerLivre(idAdherentExemplaire);
+            // Convertir la date string en LocalDate
+            LocalDate dateRetourLocal = LocalDate.parse(dateRetour);
+            String message = retourService.retournerLivre(idAdherentExemplaire, dateRetourLocal);
             model.addAttribute("success", message);
         } catch (Exception e) {
             model.addAttribute("error", "Erreur lors du retour: " + e.getMessage());

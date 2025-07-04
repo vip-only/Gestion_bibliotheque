@@ -24,7 +24,6 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Messages d'alerte -->
         <% if (request.getAttribute("success") != null) { %>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="bi bi-check-circle"></i> <%= request.getAttribute("success") %>
@@ -39,7 +38,6 @@
             </div>
         <% } %>
         
-        <!-- Filtres de recherche -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -95,7 +93,6 @@
             </div>
         </div>
         
-        <!-- Liste des emprunts en cours -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -202,7 +199,6 @@
         </div>
     </div>
     
-    <!-- Modal de confirmation de retour -->
     <div class="modal fade" id="retourModal" tabindex="-1" aria-labelledby="retourModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -224,6 +220,12 @@
                             </ul>
                         </div>
                         
+                        <div class="mb-3">
+                            <label for="dateRetour" class="form-label">Date de retour :</label>
+                            <input type="date" class="form-control" id="dateRetour" name="dateRetour" required>
+                            <div class="form-text">Sélectionnez la date effective de retour du livre</div>
+                        </div>
+                        
                         <div id="alerteRetard" class="alert alert-warning" style="display: none;">
                             <i class="bi bi-exclamation-triangle"></i>
                             <strong>Attention :</strong> Ce retour est en retard. Une pénalité sera automatiquement appliquée.
@@ -231,7 +233,7 @@
                         
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
-                            La date de retour sera ajustée automatiquement si aujourd'hui est un jour férié.
+                            La date de retour sera ajustée automatiquement si la date choisie est un jour férié.
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -247,7 +249,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Gestion du modal de retour
         document.getElementById('retourModal').addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
             var empruntId = button.getAttribute('data-emprunt-id');
@@ -260,6 +261,9 @@
             document.getElementById('modalAdherent').textContent = adherent;
             document.getElementById('modalLivre').textContent = livre;
             document.getElementById('modalExemplaire').textContent = exemplaire;
+            
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateRetour').value = today;
             
             var modalRetard = document.getElementById('modalRetard');
             var alerteRetard = document.getElementById('alerteRetard');
@@ -276,7 +280,21 @@
             }
         });
         
-        // Fonctions de filtrage
+        document.getElementById('dateRetour').addEventListener('change', function() {
+            var selectedDate = new Date(this.value);
+            var minDate = new Date('1900-01-01'); 
+            var maxDate = new Date();
+            maxDate.setFullYear(maxDate.getFullYear() + 2); 
+
+            if (selectedDate < minDate) {
+                alert('La date de retour ne peut pas être antérieure à 1900');
+                this.value = new Date().toISOString().split('T')[0];
+            } else if (selectedDate > maxDate) {
+                alert('La date de retour ne peut pas être supérieure à 1 an dans le futur');
+                this.value = new Date().toISOString().split('T')[0];
+            }
+        });
+        
         function filtrerEmprunts() {
             var filterAdherent = document.getElementById('filterAdherent').value.toLowerCase();
             var filterExemplaire = document.getElementById('filterExemplaire').value.toLowerCase();
@@ -322,7 +340,6 @@
             }
         }
         
-        // Filtrage en temps réel pour l'exemplaire
         document.getElementById('filterExemplaire').addEventListener('input', function() {
             if (this.value.length > 2) {
                 filtrerEmprunts();
@@ -331,7 +348,6 @@
             }
         });
         
-        // Filtrage automatique pour les selects
         document.getElementById('filterAdherent').addEventListener('change', filtrerEmprunts);
         document.getElementById('filterStatut').addEventListener('change', filtrerEmprunts);
     </script>
