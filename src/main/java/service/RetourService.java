@@ -37,16 +37,14 @@ public class RetourService {
     }
     
     @Transactional
-    public String retournerLivre(Integer idAdherentExemplaire) throws Exception {
-     
+    public String retournerLivre(Integer idAdherentExemplaire, LocalDate dateRetour) throws Exception {
+ 
         AdherentExemplaire emprunt = adherentExemplaireRepository.findById(idAdherentExemplaire)
             .orElseThrow(() -> new Exception("Emprunt introuvable"));
         
         if (emprunt.getDateRetour() != null) {
             throw new Exception("Ce livre a déjà été retourné");
         }
-        
-        LocalDate dateRetour = LocalDate.now();
         
         dateRetour = jourFerieService.ajusterDateLimite(dateRetour);
         
@@ -61,6 +59,11 @@ public class RetourService {
         }
         
         return message;
+    }
+    
+    @Transactional
+    public String retournerLivre(Integer idAdherentExemplaire) throws Exception {
+        return retournerLivre(idAdherentExemplaire, LocalDate.now());
     }
     
     private String verifierEtAppliquerPenalite(AdherentExemplaire emprunt, LocalDate dateRetour) {
