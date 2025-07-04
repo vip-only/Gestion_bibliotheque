@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <span class="navbar-brand">🏛️ Admin - Dashboard</span>
             <div class="navbar-nav ms-auto">
@@ -82,14 +82,12 @@
                             <small class="text-muted">Système de vérification des quotas et pénalités activé</small>
                         </div>
                         <div>
-                            <!-- Indicateur de filtrage -->
                             <span id="indicateurFiltre" class="badge bg-info d-none">
                                 <i class="bi bi-funnel"></i> Filtré
                             </span>
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- Message quand aucun résultat -->
                         <div id="aucunResultat" class="alert alert-warning d-none" role="alert">
                             <i class="bi bi-search"></i> 
                             <strong>Aucun livre trouvé</strong> pour votre recherche "<span id="termeRecherche"></span>".
@@ -136,7 +134,7 @@
                                         <td><span class="badge bg-success"><%= livre.get("nombreExemplaires") %></span></td>
                                         <td><small class="text-muted"><%= livre.get("listeExemplaires") != null ? livre.get("listeExemplaires") : "N/A" %></small></td>
                                         <td>
-                                            <button type="button" class="btn btn-primary btn-sm" 
+                                            <button type="button" class="btn btn-dark btn-sm" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#empruntModal"
                                                     data-livre-id="<%= livre.get("idLivre") %>"
@@ -270,7 +268,6 @@
             }
         });
         
-        // Système de filtrage par mots-clés
         const rechercheInput = document.getElementById('rechercheInput');
         const btnEffacer = document.getElementById('btnEffacerRecherche');
         const tableLivres = document.getElementById('tableLivres');
@@ -280,29 +277,24 @@
         const nombreResultats = document.getElementById('nombreResultats');
         const indicateurFiltre = document.getElementById('indicateurFiltre');
         
-        // Variables pour le debouncing
         let timeoutId;
         const DELAI_RECHERCHE = 300; // milliseconds
         
-        // Fonction de filtrage
         function filtrerLivres(terme) {
             if (!tbodyLivres) return;
             
             const lignes = tbodyLivres.querySelectorAll('.livre-row');
             let compteurVisible = 0;
             
-            // Si le terme est vide ou trop court
             if (terme.length < 2) {
                 lignes.forEach(ligne => {
                     ligne.style.display = '';
                     compteurVisible++;
                 });
                 
-                // Masquer le message "aucun résultat"
                 if (aucunResultat) aucunResultat.classList.add('d-none');
                 if (tableLivres) tableLivres.style.display = '';
                 
-                // Mise à jour des indicateurs
                 if (nombreResultats) nombreResultats.textContent = 'Tous les livres affichés';
                 if (indicateurFiltre) indicateurFiltre.classList.add('d-none');
                 

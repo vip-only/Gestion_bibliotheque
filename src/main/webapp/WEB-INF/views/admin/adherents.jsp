@@ -36,7 +36,7 @@
     </style>
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <span class="navbar-brand">🏛️ Admin - Gestion des Adhérents</span>
             <div class="navbar-nav ms-auto">
