@@ -23,7 +23,14 @@ public class CatalogueService {
     public List<Map<String, Object>> getCatalogueWithDisponibilite() {
         return livreRepository.findCatalogueWithDisponibilite();
     }
-    
+    public Map<String, Object> getLivreDetailsWithExemplaires(Integer idLivre) {
+        Map<String, Object> livreRaw = livreRepository.findLivreById(idLivre);
+        if (livreRaw == null) return null;
+        Map<String, Object> livre = new java.util.HashMap<>(livreRaw); // <-- copie modifiable
+        List<Map<String, Object>> exemplaires = exemplaireRepository.findExemplairesByLivre(idLivre);
+        livre.put("exemplaires", exemplaires);
+        return livre;
+    }
     /**
      * Recherche dans le catalogue avec critères
      */
