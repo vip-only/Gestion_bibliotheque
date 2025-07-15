@@ -230,6 +230,12 @@
                                 %>
                             </select>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label for="dateEmprunt" class="form-label">Date de début d'emprunt :</label>
+                            <input type="date" class="form-control" id="dateEmprunt" name="dateEmprunt" required>
+                            <div class="form-text">Choisissez la date de début de l'emprunt</div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -248,11 +254,12 @@
             var livreId = button.getAttribute('data-livre-id');
             var livreTitre = button.getAttribute('data-livre-titre');
             var exemplaires = button.getAttribute('data-exemplaires');
-            
+            var today =button.getAttribute('dateEmprunt');
+
             // Mise à jour du titre du livre
             document.getElementById('livreSelectionne').textContent = livreTitre;
             document.getElementById('idLivre').value = livreId;
-            
+            document.getElementById('dateEmprunt').value = today;
             // Mise à jour de la liste des exemplaires
             var selectExemplaire = document.getElementById('numExemplaire');
             selectExemplaire.innerHTML = '<option value="">Sélectionner un exemplaire</option>';
