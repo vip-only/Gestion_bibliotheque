@@ -119,11 +119,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
     @Query(value = """
         SELECT 
             r.idReservation,
-            r.dateDebut,
-            r.dateFin,
+            r.dateDebut as dateDebut,
+            r.dateFin as dateFin,
             a.nom as nomAdherent,
-            a.email as emailAdherent,
-            a.idAdherent
+            a.email as emailAdherent
         FROM Reservation r
         INNER JOIN (
             SELECT 
@@ -144,14 +143,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
         INNER JOIN Adherent a ON r.idAdherent = a.idAdherent
         WHERE r.idExemplaire = :idExemplaire
         AND r.idAdherent != :idAdherentDemandeur
-        AND CURDATE() < r.dateDebut
+        AND :dateReference BETWEEN r.dateDebut AND r.dateFin
         ORDER BY r.dateDebut ASC
         LIMIT 1
         """, nativeQuery = true)
     Map<String, Object> findReservationAccepteeProche(@Param("idExemplaire") Integer idExemplaire,
-                                                       @Param("idAdherentDemandeur") Integer idAdherentDemandeur);
-
-// ...existing code...
+                                                    @Param("idAdherentDemandeur") Integer idAdherentDemandeur,
+                                                    @Param("dateReference") LocalDate dateReference);
     /**
      * Trouve une réservation acceptée qui entrerait en conflit avec une nouvelle date limite
      * (si la nouvelle date limite empiète sur la date de début de la réservation)

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @Repository
 public interface AdherentExemplaireRepository extends JpaRepository<AdherentExemplaire, Integer> {
@@ -15,8 +16,8 @@ public interface AdherentExemplaireRepository extends JpaRepository<AdherentExem
     @Query("SELECT COUNT(ae) FROM AdherentExemplaire ae WHERE ae.adherent.idAdherent = :idAdherent AND ae.dateRetour IS NULL")
     Integer countEmpruntsActifs(@Param("idAdherent") Integer idAdherent);
     
-    @Query("SELECT COUNT(ae) FROM AdherentExemplaire ae WHERE ae.adherent.idAdherent = :idAdherent AND ae.dateRetour IS NULL AND ae.typePret.idTypePret = 1")
-    Integer countEmpruntsActifsADomicile(@Param("idAdherent") Integer idAdherent);
+    @Query("SELECT COUNT(ae) FROM AdherentExemplaire ae WHERE ae.adherent.idAdherent = :idAdherent AND ae.dateRetour IS NULL AND ae.typePret.idTypePret = 1 AND ae.dateEmprunt <= :dateReference")
+    Integer countEmpruntsActifsADomicile(@Param("idAdherent") Integer idAdherent, @Param("dateReference") LocalDate dateReference);
     
     @Query("SELECT CASE WHEN COUNT(ae) > 0 THEN true ELSE false END FROM AdherentExemplaire ae WHERE ae.exemplaire = :exemplaire AND ae.dateRetour IS NULL")
     boolean existsByExemplaireAndDateRetourIsNull(@Param("exemplaire") Exemplaire exemplaire);

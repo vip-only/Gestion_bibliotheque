@@ -102,11 +102,12 @@ public class PretController {
     }
     
     @PostMapping("/emprunter")
-    public String emprunter(@RequestParam String numExemplaire,
-                           @RequestParam Integer idAdherent,
-                           @RequestParam Integer idTypePret,
-                           HttpSession session,
-                           Model model) {
+    public String emprunterLivre(@RequestParam Integer idLivre,
+                             @RequestParam String numExemplaire,
+                             @RequestParam Integer idAdherent,
+                             @RequestParam Integer idTypePret,
+                             @RequestParam String dateEmprunt,
+                             Model model, HttpSession session) {
         
         Bibliothecaire bibliothecaire = (Bibliothecaire) session.getAttribute("bibliothecaire");
         if (bibliothecaire == null) {
@@ -119,8 +120,10 @@ public class PretController {
                 return dashboard(model, session);
             }
             
-            empruntService.creerEmprunt(numExemplaire, idAdherent, idTypePret);
-            model.addAttribute("success", "Emprunt créé avec succès!");
+            // Convertir la date string en LocalDate
+            LocalDate dateDebutEmprunt = LocalDate.parse(dateEmprunt);
+            String message = empruntService.emprunterLivre(idLivre, numExemplaire, idAdherent, idTypePret, dateDebutEmprunt);
+            model.addAttribute("success", message);
         } catch (Exception e) {
             model.addAttribute("error", "Erreur lors de la création de l'emprunt: " + e.getMessage());
         }
