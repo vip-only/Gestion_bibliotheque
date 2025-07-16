@@ -51,6 +51,8 @@ public class ProlongementService {
                 throw new Exception("Vous n'êtes pas autorisE à prolonger cet emprunt");
             }
             
+            verifierQuotaProlongement(adherentExemplaire.getAdherent(), adherentExemplaire.getExemplaire().getLivre().getIdLivre());
+            
             // VErifier qu'il n'y a pas dEjà une demande en cours
             Integer countDemandesEnCours = prolongementExemplaireRepository.countByAdherentExemplaireAndEtatEnCours(idAdherentExemplaire);
             if (countDemandesEnCours != null && countDemandesEnCours > 0) {

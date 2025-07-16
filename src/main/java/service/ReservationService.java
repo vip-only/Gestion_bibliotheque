@@ -191,7 +191,6 @@ public class ReservationService {
     
         int totalActuel = empruntsActuels + reservationsActuelles;
     
-        // Vérification du quota global (emprunts + réservations)
         if (totalActuel >= quotaMax) {
             String profilLibelle = adherent.getProfil().getLibelle();
             throw new Exception("QUOTA DEPASSE : Vous avez atteint votre limite d'emprunts et reservations.\n\n" +
@@ -207,10 +206,10 @@ public class ReservationService {
                     "- Patientez que vos reservations arrivent a echeance");
         }
     
-        if (reservationsActuelles >= quotaResa) {
-            throw new Exception("QUOTA RESERVATIONS DEPASSE : Vous avez atteint votre limite de réservations en cours (" +
-                    quotaResa + ").\nAnnulez une réservation avant d'en faire une nouvelle.");
-        }
+        // if (reservationsActuelles >= quotaResa) {
+        //     throw new Exception("QUOTA RESERVATIONS DEPASSE : Vous avez atteint votre limite de réservations en cours (" +
+        //             quotaResa + ").\nAnnulez une réservation avant d'en faire une nouvelle.");
+        // }
     }
     
     private void verifierDateReservation(LocalDate dateReservation) throws Exception {
