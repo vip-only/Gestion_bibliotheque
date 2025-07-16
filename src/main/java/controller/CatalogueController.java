@@ -26,7 +26,6 @@ public class CatalogueController {
     
     @GetMapping("/catalogue")
     public String catalogue(Model model, HttpSession session) {
-        // Vérifier que l'adhérent est connecté
         Adherent adherent = (Adherent) session.getAttribute("adherent");
         if (adherent == null) {
             return "redirect:/";
@@ -40,7 +39,6 @@ public class CatalogueController {
             List<String> tags = catalogueService.getAllTags();
             List<String> maisonsEdition = catalogueService.getAllMaisonsEdition();
             
-            // Ajouter les attributs au modèle
             model.addAttribute("adherent", adherent);
             model.addAttribute("catalogue", catalogue);
             model.addAttribute("auteurs", auteurs);
