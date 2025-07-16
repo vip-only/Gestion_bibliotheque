@@ -155,6 +155,8 @@ CREATE TABLE Quota (
     idQuota INT AUTO_INCREMENT PRIMARY KEY,
     idProfil INT,
     nbExemplaires INT NOT NULL,
+    nbResa INT NOT NULL,
+    nbProlong INT NOT NULL,
     FOREIGN KEY (idProfil) REFERENCES Profil(idProfil)
 );
 

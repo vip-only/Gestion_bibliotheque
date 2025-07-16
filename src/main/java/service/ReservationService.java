@@ -179,33 +179,37 @@ public class ReservationService {
     }
     
     private void verifierQuota(Adherent adherent) throws Exception {
-        Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
-        if (quotaMax == null) {
-            quotaMax = 3; // Quota par defaut
-        }
-        
+        Quota quota = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
+        Integer quotaMax = quota != null && quota.getNbExemplaires() != null ? quota.getNbExemplaires() : 3;
+        Integer quotaResa = quota != null && quota.getNbResa() != null ? quota.getNbResa() : 2; // valeur par défaut si besoin
+    
         Integer empruntsActuels = adherentExemplaireRepository.countEmpruntsActifs(adherent.getIdAdherent());
         Integer reservationsActuelles = reservationRepository.countReservationsActives(adherent.getIdAdherent());
-        
+    
         if (empruntsActuels == null) empruntsActuels = 0;
         if (reservationsActuelles == null) reservationsActuelles = 0;
-        
+    
         int totalActuel = empruntsActuels + reservationsActuelles;
-        
+    
+        // Vérification du quota global (emprunts + réservations)
         if (totalActuel >= quotaMax) {
             String profilLibelle = adherent.getProfil().getLibelle();
-            
             throw new Exception("QUOTA DEPASSE : Vous avez atteint votre limite d'emprunts et reservations.\n\n" +
-                              "Votre profil : " + profilLibelle + "\n" +
-                              "Quota autorise : " + quotaMax + " livre(s)\n" +
-                              "Actuellement :\n" +
-                              "   - " + empruntsActuels + " emprunt(s) en cours\n" +
-                              "   - " + reservationsActuelles + " reservation(s) active(s)\n" +
-                              "   - Total : " + totalActuel + "/" + quotaMax + "\n\n" +
-                              "SOLUTIONS :\n" +
-                              "- Retournez des livres empruntes\n" +
-                              "- Annulez des reservations non utilisees\n" +
-                              "- Patientez que vos reservations arrivent a echeance");
+                    "Votre profil : " + profilLibelle + "\n" +
+                    "Quota autorise : " + quotaMax + " livre(s)\n" +
+                    "Actuellement :\n" +
+                    "   - " + empruntsActuels + " emprunt(s) en cours\n" +
+                    "   - " + reservationsActuelles + " reservation(s) active(s)\n" +
+                    "   - Total : " + totalActuel + "/" + quotaMax + "\n\n" +
+                    "SOLUTIONS :\n" +
+                    "- Retournez des livres empruntes\n" +
+                    "- Annulez des reservations non utilisees\n" +
+                    "- Patientez que vos reservations arrivent a echeance");
+        }
+    
+        if (reservationsActuelles >= quotaResa) {
+            throw new Exception("QUOTA RESERVATIONS DEPASSE : Vous avez atteint votre limite de réservations en cours (" +
+                    quotaResa + ").\nAnnulez une réservation avant d'en faire une nouvelle.");
         }
     }
     

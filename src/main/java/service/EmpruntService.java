@@ -49,7 +49,7 @@ public class EmpruntService {
         }
         
         if (idTypePret == 1) { 
-            Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
+            Integer quotaMax = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil()).getNbExemplaires();
             if (quotaMax == null) {
                 quotaMax = 1; 
             }

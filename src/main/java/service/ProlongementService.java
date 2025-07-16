@@ -31,6 +31,10 @@ public class ProlongementService {
     @Autowired
     private ReservationRepository reservationRepository;
     
+    @Autowired
+    private QuotaRepository quotaRepository;
+    
+
     @Transactional
     public String creerDemandeProlongement(Integer idAdherentExemplaire, Integer idAdherent) throws Exception {
         try {
@@ -180,6 +184,18 @@ public class ProlongementService {
                 adherentExemplaire.getExemplaire().getLivre().getTitre(),
                 adherentExemplaire.getDateLimite()
             ));
+        }
+    }
+    private void verifierQuotaProlongement(Adherent adherent, Integer idLivre) throws Exception {
+        Quota quota = quotaRepository.findQuotaByProfil(adherent.getProfil().getIdProfil());
+        if (quota == null) throw new Exception("Aucun quota défini pour ce profil.");
+    
+        Integer nbProlongMax = quota.getNbProlong();
+        Integer nbProlongements = prolongementExemplaireRepository.countProlongementsByAdherentAndLivre(adherent.getIdAdherent(), idLivre);
+        if (nbProlongements == null) nbProlongements = 0;
+    
+        if (nbProlongements >= nbProlongMax) {
+            throw new Exception("Vous avez atteint la limite de prolongements (" + nbProlongements + "/" + nbProlongMax + ") pour ce livre.");
         }
     }
 }
