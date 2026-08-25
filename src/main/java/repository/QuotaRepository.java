@@ -11,8 +11,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface QuotaRepository extends JpaRepository<Quota, Integer> {
-    
-    @Query("SELECT q.nbExemplaires FROM Quota q WHERE q.profil.idProfil = :idProfil")
-    Integer findQuotaByProfil(@Param("idProfil") Integer idProfil);
+    @Query("SELECT q FROM Quota q WHERE q.profil.idProfil = :idProfil")
+    Quota findQuotaByProfil(@Param("idProfil") Integer idProfil);
 
 }

@@ -74,4 +74,13 @@ public interface ProlongementExemplaireRepository extends JpaRepository<Prolonge
         AND epe.idEtat = 1
         """, nativeQuery = true)
     Integer countByAdherentExemplaireAndEtatEnCours(@Param("idAdherentExemplaire") Integer idAdherentExemplaire);
+
+    @Query(value = """
+    SELECT COUNT(*) FROM ProlongementExemplaire pe
+    INNER JOIN AdherentExemplaire ae ON pe.idAdherentExemplaire = ae.idAdherentExemplaire
+    WHERE ae.idAdherent = :idAdherent AND ae.idExemplaire IN (
+        SELECT idExemplaire FROM Exemplaire WHERE idLivre = :idLivre
+    )
+    """, nativeQuery = true)
+    Integer countProlongementsByAdherentAndLivre(@Param("idAdherent") Integer idAdherent, @Param("idLivre") Integer idLivre);
 }

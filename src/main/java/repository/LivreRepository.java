@@ -105,4 +105,22 @@ public interface LivreRepository extends JpaRepository<Livre, Integer> {
 
     @Query("SELECT DISTINCT aut.nom FROM Auteur aut ORDER BY aut.nom")
     List<String> findAllAuteurs();
+
+    @Query(value = """
+        SELECT 
+            l.idLivre,
+            l.titre,
+            l.edition,
+            l.tag,
+            l.agesup,
+            aut.nom as auteur,
+            me.nom as maisonEdition,
+            gl.libelle as genre
+        FROM Livre l
+        LEFT JOIN Auteur aut ON l.idAuteur = aut.idAuteur
+        LEFT JOIN MaisonEdition me ON l.idMaison = me.idMaison
+        LEFT JOIN GenreLitteraire gl ON l.idGenre = gl.idGenre
+        WHERE l.idLivre = :idLivre
+        """, nativeQuery = true)
+    Map<String, Object> findLivreById(@Param("idLivre") Integer idLivre);
 }

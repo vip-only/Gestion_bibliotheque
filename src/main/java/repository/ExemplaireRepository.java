@@ -48,4 +48,20 @@ public interface ExemplaireRepository extends JpaRepository<Exemplaire, Integer>
     
     @Query("SELECT e FROM Exemplaire e WHERE e.numExemplaire = :numExemplaire")
     Exemplaire findByNumExemplaire(@Param("numExemplaire") String numExemplaire);
+
+    @Query(value = """
+        SELECT 
+            e.idExemplaire,
+            e.numExemplaire,
+            CASE 
+                WHEN ae.dateRetour IS NULL THEN 'Emprunté'
+                WHEN r.idReservation IS NOT NULL AND r.dateFin >= CURDATE() THEN 'Réservé'
+                ELSE 'Disponible'
+            END as statut
+        FROM Exemplaire e
+        LEFT JOIN AdherentExemplaire ae ON e.idExemplaire = ae.idExemplaire AND ae.dateRetour IS NULL
+        LEFT JOIN Reservation r ON e.idExemplaire = r.idExemplaire AND r.dateFin >= CURDATE()
+        WHERE e.idLivre = :idLivre
+        """, nativeQuery = true)
+    List<Map<String, Object>> findExemplairesByLivre(@Param("idLivre") Integer idLivre);
 }

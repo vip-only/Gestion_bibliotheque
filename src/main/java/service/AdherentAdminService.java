@@ -7,6 +7,8 @@ import repository.AdherentRepository;
 import repository.AdherentAbonnementRepository;
 import repository.AdherentPenaliteRepository;
 import repository.ProfilRepository;
+import repository.QuotaRepository;
+
 import model.Adherent;
 import model.AdherentAbonnement;
 import model.Profil;
@@ -32,6 +34,9 @@ public class AdherentAdminService {
     @Autowired
     private ProfilRepository profilRepository;
     
+    @Autowired
+    private QuotaRepository quotaRepository;
+    
     public List<Map<String, Object>> getAdherentsActifs() {
         return adherentRepository.findAdherentsActifs();
     }
@@ -44,6 +49,10 @@ public class AdherentAdminService {
         return adherentRepository.findAdherentsPenalises();
     }
     
+    public Map<String, Object> getAdherentById(Integer idAdherent) {
+        return adherentRepository.findAdherentById(idAdherent);
+    }
+
     public Map<String, Object> getStatistiquesAdherents() {
         Map<String, Object> stats = new HashMap<>();
         

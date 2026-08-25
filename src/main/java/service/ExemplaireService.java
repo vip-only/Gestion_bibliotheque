@@ -15,4 +15,5 @@ public class ExemplaireService {
     public List<Map<String, Object>> getExemplairesDisponiblesGroupByLivre() {
         return exemplaireRepository.findExemplairesDisponiblesGroupByLivre();
     }
+
 }

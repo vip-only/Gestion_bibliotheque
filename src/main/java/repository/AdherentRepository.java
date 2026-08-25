@@ -166,4 +166,40 @@ public interface AdherentRepository extends JpaRepository<Adherent, Integer> {
 
     @Query(value = "SELECT COUNT(*) > 0 FROM Adherent WHERE email = :email", nativeQuery = true)
     boolean existsByEmail(@Param("email") String email);
+    
+    @Query(value = """
+        SELECT 
+            a.idAdherent,
+            a.nom,
+            a.email,
+            a.dateNaissance,
+            p.libelle as profil,
+            aa.dateFin as dateFinAbonnement,
+            CASE WHEN aa.dateFin >= CURDATE() THEN true ELSE false END as actif,
+            q.nbExemplaires as quotaMax,
+            COALESCE(ae.nbEmprunts, 0) as quotaActuel,
+            (q.nbExemplaires - COALESCE(ae.nbEmprunts, 0)) as quotaRestant,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM AdherentPenalite ap 
+                    WHERE ap.idAdherent = a.idAdherent AND ap.dateFin >= CURDATE()
+                ) THEN true ELSE false
+            END as penaliseActif
+        FROM Adherent a
+        LEFT JOIN Profil p ON a.idProfil = p.idProfil
+        LEFT JOIN (
+            SELECT idAdherent, MAX(dateFin) as dateFin
+            FROM AdherentAbonnement
+            GROUP BY idAdherent
+        ) aa ON a.idAdherent = aa.idAdherent
+        LEFT JOIN Quota q ON p.idProfil = q.idProfil
+        LEFT JOIN (
+            SELECT idAdherent, COUNT(*) as nbEmprunts
+            FROM AdherentExemplaire
+            WHERE dateRetour IS NULL
+            GROUP BY idAdherent
+        ) ae ON a.idAdherent = ae.idAdherent
+        WHERE a.idAdherent = :idAdherent
+        """, nativeQuery = true)
+    Map<String, Object> findAdherentById(@Param("idAdherent") Integer idAdherent);
 }
